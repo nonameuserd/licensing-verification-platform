@@ -1,0 +1,9 @@
+{
+  "name": "employer-portal",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/employer-portal/src",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project employer-portal --web",
+  "targets": {}
+}
