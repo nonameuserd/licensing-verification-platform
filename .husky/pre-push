@@ -1,0 +1,3 @@
+# Run the full CI pipeline before pushing
+echo "Running full CI pipeline before push..."
+yarn ci

@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package verification;
+
+import "google/protobuf/timestamp.proto";
+
+// Service for credential verification
+service VerificationService {
+  // Verifies a single credential
+  rpc VerifyCredential(VerificationRequest) returns (VerificationResponse);
+
+  // Verifies a batch of credentials
+  rpc BatchVerifyCredentials(BatchVerificationRequest) returns (BatchVerificationResponse);
+
+  // Gets the status of a credential
+  rpc GetCredentialStatus(CredentialStatusRequest) returns (CredentialStatusResponse);
+
+  // Searches for credentials
+  rpc SearchCredentials(SearchRequest) returns (SearchResponse);
+
+  // Verifies a document's authenticity
+  rpc VerifyDocument(DocumentVerificationRequest) returns (DocumentVerificationResponse);
+
+  // Verifies a credential across multiple boards
+  rpc CrossBoardVerify(CrossBoardVerificationRequest) returns (CrossBoardVerificationResponse);
+}
+
+// Represents a professional credential
+message Credential {
+  string credential_id = 1;
+  string license_number = 2;
+  string exam_id = 3;
+  google.protobuf.Timestamp issue_date = 4;
+  google.protobuf.Timestamp expiry_date = 5;
+  CredentialStatus status = 6;
+  string issuer_id = 7; // e.g., "california-medical-board"
+  google.protobuf.Timestamp updated_at = 8;
+  HolderInfo holder_info = 9;
+}
+
+// Personal information of the credential holder
+message HolderInfo {
+  string first_name = 1;
+  string last_name = 2;
+  string date_of_birth = 3; // YYYY-MM-DD
+}
+
+// Enum for credential status
+enum CredentialStatus {
+  STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  SUSPENDED = 2;
+  EXPIRED = 3;
+  REVOKED = 4;
+}
+
+// Request to verify a credential. Can be done by credential ID, license number, or personal info.
+message VerificationRequest {
+  string exam_id = 1;
+  oneof verification_method {
+    string credential_id = 2;
+    string license_number = 3;
+    HolderInfo personal_info = 4;
+  }
+}
+
+// Response for a credential verification
+message VerificationResponse {
+  bool verified = 1;
+  google.protobuf.Timestamp verification_timestamp = 2;
+  string error_message = 3;
+}
+
+// Request for a batch verification
+message BatchVerificationRequest {
+  repeated VerificationRequest requests = 1;
+}
+
+// Response for a batch verification
+message BatchVerificationResponse {
+  repeated VerificationResponse responses = 1;
+}
+
+// Request to get the status of a credential
+message CredentialStatusRequest {
+  string credential_id = 1;
+}
+
+// Response for a credential status check
+message CredentialStatusResponse {
+  string credential_id = 1;
+  CredentialStatus status = 2;
+  google.protobuf.Timestamp renewal_deadline = 3;
+}
+
+// Request to search for credentials
+message SearchRequest {
+  oneof search_criteria {
+    string name = 1;
+    string license_number = 2;
+    string credential_id = 3;
+  }
+  string exam_id = 4;
+}
+
+// Response for a credential search
+message SearchResponse {
+  repeated Credential credentials = 1;
+}
+
+// Request to verify a document
+message DocumentVerificationRequest {
+  string document_hash = 1;
+  string credential_id = 2;
+}
+
+// Response for a document verification
+message DocumentVerificationResponse {
+  bool document_verified = 1;
+  google.protobuf.Timestamp verified_at = 2;
+}
+
+// Request for cross-board verification
+message CrossBoardVerificationRequest {
+  string credential_id = 1;
+  repeated string target_boards = 2;
+}
+
+// Response for cross-board verification
+message CrossBoardVerificationResponse {
+  bool cross_board_verified = 1;
+  google.protobuf.Timestamp verification_timestamp = 2;
+  map<string, bool> board_results = 3;
+}

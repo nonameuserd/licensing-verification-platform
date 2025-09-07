@@ -1,0 +1,8 @@
+# Run lint-staged for staged files
+yarn pre-commit
+
+# Run build to ensure everything compiles
+yarn build
+
+# Run tests to ensure nothing is broken
+yarn test

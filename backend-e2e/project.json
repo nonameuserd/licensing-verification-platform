@@ -2,23 +2,22 @@
   "name": "backend-e2e",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "implicitDependencies": [
-    "backend"
-  ],
+  "implicitDependencies": ["backend"],
   "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx e2e backend-e2e"
+      }
+    },
     "e2e": {
       "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/{e2eProjectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
         "jestConfig": "backend-e2e/jest.config.ts",
         "passWithNoTests": true
       },
-      "dependsOn": [
-        "backend:build",
-        "backend:serve"
-      ]
+      "dependsOn": ["backend:build", "backend:serve"]
     }
   }
 }

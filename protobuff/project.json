@@ -1,0 +1,29 @@
+{
+  "name": "protobuff",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "protobuff/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/protobuff",
+        "main": "protobuff/src/index.ts",
+        "tsConfig": "protobuff/tsconfig.lib.json",
+        "assets": ["protobuff/src/verification.proto"]
+      }
+    },
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn generate",
+        "cwd": "protobuff"
+      }
+    }
+  }
+}
