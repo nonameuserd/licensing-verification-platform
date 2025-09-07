@@ -5,14 +5,6 @@
   "scripts": {
     "generate": "protoc --plugin=./node_modules/.bin/protoc-gen-ts --ts_out=./src/lib --proto_path=./src ./src/verification.proto"
   },
-  "dependencies": {
-    "@protobuf-ts/runtime": "^2.11.1",
-    "google-protobuf": "^3.21.2",
-    "@grpc/grpc-js": "^1.9.14"
-  },
-  "devDependencies": {
-    "@protobuf-ts/plugin": "^2.11.1",
-    "protoc-gen-ts": "^0.8.7",
-    "typescript": "~5.8.2"
-  }
+  "dependencies": {},
+  "devDependencies": {}
 }
