@@ -1,0 +1,10 @@
+{
+  "name": "@licensing-verification-platform/protobuff",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "generate": "protoc --plugin=./node_modules/.bin/protoc-gen-ts --ts_out=./src/lib --proto_path=./src ./src/verification.proto"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

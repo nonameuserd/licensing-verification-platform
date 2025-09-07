@@ -1,0 +1,388 @@
+---
+description: Professional Licensing Verification Platform - Core Development Rules
+globs:
+alwaysApply: true
+---
+
+# Professional Licensing Verification Platform - Development Rules
+
+## Project Overview
+
+This is a **verification-first** professional licensing platform that becomes the "Stripe of Professional Credentials" for medical, legal, and engineering licensing boards. The platform provides privacy-preserving credential verification using Zero-Knowledge Proofs (ZKPs) without requiring exam-taking functionality.
+
+## Core Architecture & Technology Stack
+
+### Backend (Node.js + TypeScript)
+
+- **Framework**: Express.js with TypeScript (strict mode, no `any` types)
+- **Database**: DynamoDB for credential storage, Redis for caching and quotas
+- **Authentication**: JWT tokens with role-based access control (RBAC)
+- **ZKP Integration**: Circom circuits for privacy-preserving verification
+- **Blockchain**: L2 networks (Polygon, Arbitrum, or Optimism) for cost-effective on-chain storage
+- **AWS SDK**: AWS SDK v3 for all AWS service integrations
+- **Infrastructure**: AWS CDK with Lambda functions and API Gateway
+
+### Frontend (React + TypeScript)
+
+- **Framework**: React 18+ with TypeScript
+- **UI Library**: Material-UI (MUI) for admin dashboard
+- **Blockchain**: Wagmi + Viem for L2 blockchain integration (Polygon, Arbitrum, or Optimism)
+- **Design**: Responsive web design for all devices
+
+### Key Components
+
+- **Admin Dashboard**: Web-based credential management for licensing boards
+- **Employer Portal**: API and web interface for credential verification
+- **ZKP Service**: Privacy-preserving verification without revealing sensitive data
+- **On-Chain Registry**: Immutable credential storage with smart contracts
+- **Protobuff Library**: Protocol buffer definitions for API contracts and data serialization
+- **Shared Library**: Common utilities, types, and shared business logic across the platform
+
+## Development Standards
+
+### Code Quality Requirements
+
+- **TypeScript**: Always use strict TypeScript with explicit types, never `any`
+- **Testing**: Write unit tests for all new code (target 98% coverage)
+- **Documentation**: Add JSDoc comments for all public functions
+- **Error Handling**: Implement comprehensive error handling with proper logging
+- **Security**: Security-first approach with input validation and sanitization
+- **AWS SDK**: Use AWS SDK v3 for all AWS service integrations
+- **Testing AWS Services**: Use [aws-sdk-client-mock](https://github.com/m-radzikowski/aws-sdk-client-mock) for mocking AWS SDK v3 clients in tests
+
+### Architecture Patterns
+
+- **Service Layer**: Business logic in service classes
+- **Repository Pattern**: Data access through repositories
+- **Middleware**: Cross-cutting concerns in middleware (auth, quotas, rate limiting)
+- **Event-Driven**: Use events for loose coupling
+- **Dependency Injection**: Use DI for testability
+
+### API Design Standards
+
+- **RESTful**: Follow REST conventions with proper HTTP methods
+- **Versioning**: Use API versioning (v1, v2, etc.)
+- **Pagination**: Implement pagination for list endpoints
+- **Rate Limiting**: Implement rate limiting for all endpoints
+- **Authentication**: JWT tokens with proper expiration
+- **Protocol Buffers**: Use protobuff definitions for API contracts and data serialization
+- **Shared Types**: Define common types and interfaces in the shared library
+
+## Library Usage Guidelines
+
+### Protobuff Library (`@licensing-verification-platform/protobuff`)
+
+- **Purpose**: Define API contracts and data serialization schemas
+- **Usage**: All API request/response types should be defined in `verification.proto`
+- **Generation**: Run `nx build protobuff` to generate TypeScript code from `.proto` files
+- **Best Practices**:
+  - Use semantic versioning for proto schema changes
+  - Maintain backward compatibility when possible
+  - Document all message fields and service methods
+  - Use proper naming conventions (snake_case for proto, camelCase for generated TS)
+
+### Shared Library (`@licensing-verification-platform/shared`)
+
+- **Purpose**: Common utilities, types, and business logic shared across the platform
+- **Usage**: Import shared types and utilities in backend and frontend applications
+- **Best Practices**:
+  - Keep shared code framework-agnostic when possible
+  - Export only public APIs through index.ts
+  - Use proper TypeScript types and interfaces
+  - Avoid circular dependencies between shared and other libraries
+
+### AWS SDK v3 Integration
+
+- **Purpose**: All AWS service integrations must use AWS SDK v3
+- **Usage**: Import specific AWS service clients (e.g., `@aws-sdk/client-dynamodb`, `@aws-sdk/client-s3`)
+- **Best Practices**:
+  - Use modular imports to reduce bundle size
+  - Implement proper error handling for AWS service calls
+  - Use AWS SDK v3 command pattern for all operations
+  - Configure clients with appropriate retry and timeout settings
+  - Use environment variables for AWS configuration
+
+### AWS Testing with aws-sdk-client-mock
+
+- **Purpose**: Mock AWS SDK v3 clients for unit testing
+- **Usage**: Use [aws-sdk-client-mock](https://github.com/m-radzikowski/aws-sdk-client-mock) library
+- **Best Practices**:
+  - Mock AWS clients in test setup using `mockClient()`
+  - Reset mocks between tests using `mock.reset()`
+  - Use Jest matchers like `toHaveReceivedCommand()` for assertions
+  - Test both success and error scenarios
+  - Mock at the service level, not individual methods
+
+## Core Features Implementation
+
+### 1. ZKP Verification System (Priority 1)
+
+- Integrate existing `ExamProof.circom` circuit
+- Create ZKP verification service for privacy-preserving verification
+- Implement nullifier system to prevent replay attacks
+- Store verification results on L2 blockchain
+
+### 2. Credential Management (Priority 1)
+
+- Admin dashboard for licensing boards to manage credentials
+- Credential submission interface with validation
+- Organization management and user roles
+- Compliance reporting and audit trails
+
+### 3. Employer Verification API (Priority 1)
+
+- REST API for instant credential verification
+- Web-based verification portal
+- Rate limiting and authentication
+- Webhook notifications for status changes
+
+### 4. Security & Compliance (Priority 2)
+
+- HIPAA compliance for medical boards
+- SOC 2 compliance measures
+- Audit logging for all operations
+- Data retention policies
+- Input validation and sanitization
+
+## File Structure Guidelines
+
+### Backend Structure
+
+```
+backend/src/
+├── routes/           # API endpoints (verification, credentials, admin)
+├── services/         # Business logic (zkpService, credentialService)
+├── middleware/       # Cross-cutting concerns (auth, quotas, rate limiting)
+├── models/          # Data models and database operations
+├── utils/           # Utility functions and helpers
+└── tests/           # Unit and integration tests
+```
+
+### Frontend Structure
+
+```
+frontend/
+├── admin-dashboard/  # Licensing board management interface
+├── employer-portal/  # Employer verification interface
+└── shared/          # Shared components and utilities
+```
+
+### Shared Libraries Structure
+
+```
+protobuff/           # Protocol buffer definitions
+├── src/
+│   ├── lib/         # Generated protobuf code
+│   └── verification.proto  # API contract definitions
+└── package.json
+
+shared/              # Common utilities and types
+├── src/
+│   └── lib/         # Shared business logic, types, utilities
+└── package.json
+```
+
+## Key Implementation Files
+
+### Backend Core Files
+
+- `backend/src/routes/verification.ts` - Credential verification endpoints
+- `backend/src/services/zkpService.ts` - ZKP proof generation and verification
+- `backend/src/middleware/quotaMiddleware.ts` - Per-organization rate limiting
+- `backend/src/services/credentialService.ts` - Credential CRUD operations
+- `backend/src/repositories/dynamoDbRepository.ts` - DynamoDB operations using AWS SDK v3
+- `backend/src/tests/aws-sdk-mocks.ts` - AWS SDK v3 mock setup using aws-sdk-client-mock
+
+### Frontend Core Files
+
+- `frontend/admin-dashboard/src/pages/Verification.tsx` - Credential verification interface
+- `frontend/admin-dashboard/src/pages/CredentialManagement.tsx` - Credential management
+- `frontend/employer-portal/src/components/CredentialLookup.tsx` - Employer verification
+
+### Shared Libraries Core Files
+
+- `protobuff/src/verification.proto` - Protocol buffer definitions for API contracts
+- `protobuff/src/lib/protobuff.ts` - Generated protobuf TypeScript code
+- `shared/src/lib/shared.ts` - Common utilities, types, and business logic
+- `shared/src/index.ts` - Shared library exports
+
+## Security Requirements
+
+### Authentication & Authorization
+
+- JWT tokens with proper expiration
+- Role-based access control (Super Admin, Admin, Credential Manager, Viewer)
+- API key authentication for employers
+- Multi-factor authentication for admin users
+
+### Data Protection
+
+- Encryption at rest and in transit
+- Input validation on all endpoints
+- SQL injection prevention
+- XSS and CSRF protection
+- Rate limiting and DDoS protection
+
+### Compliance
+
+- HIPAA compliance for medical data
+- SOC 2 security controls
+- Audit trails for all operations
+- Data retention policies
+- Privacy-by-design architecture
+
+## Performance Requirements
+
+### Technical Metrics
+
+- 99.9% API uptime
+- <200ms average response time
+- 98% test coverage
+- Zero critical security vulnerabilities
+
+### Business Metrics
+
+- 5+ licensing board customers
+- 5,000+ verifications per day
+- $25K+ ARPC (Average Revenue Per Customer)
+- <5% churn rate
+
+## Implementation Priorities
+
+### Phase 1: Core Verification (Weeks 1-4)
+
+1. Backend API foundation with Express.js and TypeScript
+2. ZKP integration with existing circuits
+3. Basic admin dashboard for credential management
+4. Authentication and authorization system
+
+### Phase 2: Security & Compliance (Weeks 5-8)
+
+1. HIPAA compliance measures
+2. Audit logging and compliance reporting
+3. Rate limiting and quota management
+4. Document verification (optional premium feature)
+
+### Phase 3: Enterprise Features (Weeks 9-12)
+
+1. Multi-tenant architecture
+2. Employer verification API
+3. Advanced analytics and reporting
+4. White-label solutions
+
+## Testing Strategy
+
+### Unit Tests
+
+- Test all service methods
+- Test all API endpoints
+- Test all utility functions
+- Test all middleware
+- Test protobuff message serialization/deserialization
+- Test shared library utilities and types
+- Test AWS SDK v3 integrations using aws-sdk-client-mock
+- Test DynamoDB operations with mocked clients
+- Test S3 operations with mocked clients
+
+### Integration Tests
+
+- Test API integration
+- Test database integration
+- Test ZKP verification integration
+- Test external service integration
+
+### End-to-End Tests
+
+- Test complete verification flow
+- Test admin dashboard functionality
+- Test employer portal functionality
+
+## Deployment & Infrastructure
+
+### Development Environment
+
+- Local development with Docker
+- Hot reloading for frontend
+- Database seeding for testing
+- Mock external services
+
+### Production Environment
+
+- AWS deployment with CDK
+- Multi-region deployment
+- Auto-scaling configuration
+- Monitoring and alerting
+
+## Success Criteria
+
+### Technical Success
+
+- All tests passing with 98% coverage
+- API response times <200ms
+- Zero critical security vulnerabilities
+- 99.9% uptime achieved
+
+### Business Success
+
+- 2+ medical board pilot signups
+- 1,000+ verifications completed
+- $25K+ ARPC achieved
+- 95% customer satisfaction
+
+## Important Notes
+
+### Verification-First Approach
+
+- **No exam-taking required** - focus purely on credential verification
+- **No AI fraud detection** - unnecessary for verification-only platform
+- **Privacy-preserving** - ZKPs ensure verification without revealing sensitive data
+- **Instant verification** - employers can verify credentials without contacting boards
+
+### L2 Blockchain Benefits
+
+- **Cost-effective** - L2 networks provide significantly lower transaction costs than L1
+- **Fast transactions** - Near-instant finality for credential verification
+- **Scalability** - Handle high-volume verification requests without congestion
+- **EVM compatibility** - Seamless integration with existing Ethereum tooling
+- **Security** - Inherits security from L1 while providing better UX
+
+### Monopoly Strategy
+
+- **Network effects** - boards become locked in once employers use the system
+- **Regulatory moat** - early adoption creates compliance advantages
+- **Technical moat** - ZKPs + web-based verification + L2 on-chain registry combination
+- **Switching costs** - integrated verification systems make migration expensive
+
+### Target Market
+
+1. **State Medical Boards** (highest priority - $2B+ market)
+2. **Bar Associations** (lawyer licensing - $1B+ market)
+3. **Engineering Licensing Boards** (PE licensing - $500M+ market)
+4. **Financial Services Licensing** (FINRA, SEC - $300M+ market)
+
+## Code Review Checklist
+
+### Before Submitting PR
+
+- [ ] All tests pass
+- [ ] Code coverage maintained
+- [ ] No TypeScript errors
+- [ ] ESLint warnings resolved
+- [ ] JSDoc comments added
+- [ ] Security considerations addressed
+- [ ] Performance implications considered
+- [ ] Error handling implemented
+- [ ] Logging added where appropriate
+
+### During Code Review
+
+- [ ] Code follows established patterns
+- [ ] Business logic is correct
+- [ ] Edge cases are handled
+- [ ] Security vulnerabilities addressed
+- [ ] Performance is acceptable
+- [ ] Tests are comprehensive
+- [ ] Documentation is clear
+- [ ] Error messages are helpful
+
+This platform aims to become the canonical verification infrastructure for professional licensing boards, providing instant, privacy-preserving credential verification that creates network effects and regulatory moats for sustainable competitive advantage.
