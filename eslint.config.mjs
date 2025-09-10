@@ -1,9 +1,14 @@
 import nx from '@nx/eslint-plugin';
+import pluginJest from 'eslint-plugin-jest';
 
 export default [
   ...nx.configs['flat/base'],
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
+  // Register plugins for flat config so rules like "jest/expect-expect" resolve.
+  {
+    plugins: { jest: pluginJest },
+  },
   {
     ignores: [
       '**/dist',

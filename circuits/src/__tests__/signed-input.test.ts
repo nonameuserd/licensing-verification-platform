@@ -34,7 +34,7 @@ function findLatestProofDir(): string | null {
           hasCanonical,
           hasWitness,
         };
-      } catch (e) {
+      } catch {
         return null;
       }
     })

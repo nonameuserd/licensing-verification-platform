@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import { JsonRpcProvider, ContractFactory } from 'ethers';
+import { circuitLogger as logger } from '../src/lib/logger.js';
 
 async function main() {
   const rpc = process.env['RPC_URL'] || 'http://127.0.0.1:8545';
@@ -33,19 +34,19 @@ async function main() {
     '0x' +
     output.contracts['ExamProofVerifier.sol'][contractName].evm.bytecode.object;
 
-  console.log('Deploying ExamProofVerifier...');
+  logger.info('Deploying ExamProofVerifier...');
   const factory = new ContractFactory(abi, bytecode, signer);
   const contract = await factory.deploy();
   // ethers v6: waitForDeployment and getAddress
   await contract.waitForDeployment();
   const address = await contract.getAddress();
-  console.log('Deployed at:', address);
+  logger.info('Deployed at:', address);
   // Write address to file for downstream steps
   const outPath = path.join(process.cwd(), 'artifacts', 'verifier-address.txt');
   require('fs').writeFileSync(outPath, address);
 }
 
 main().catch((e) => {
-  console.error(e);
+  logger.error(e);
   process.exit(1);
 });

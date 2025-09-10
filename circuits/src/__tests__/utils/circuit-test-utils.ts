@@ -4,7 +4,7 @@
  */
 
 import { TestUtils, TEST_CONSTANTS } from '../setup';
-import { CircuitLogger } from '../../lib/logger';
+import { CircuitLogger, logger } from '../../lib/logger';
 import {
   CircuitInput,
   PublicCredentialData,
@@ -378,6 +378,7 @@ export class CircuitTestUtils {
         operationTimes.push(opEndTime - opStartTime);
         operationsCompleted++;
       } catch (error) {
+        logger.error('Error during stress test operation', error);
         errors++;
       }
     };

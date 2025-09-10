@@ -126,10 +126,3 @@ Before removing any of the script files above:
 
 - Grep the repository for usages: `git grep '<filename>'` or `rg '<filename>'` to ensure there are no references in CI, release scripts, or other tooling.
 - Update any CI workflows that rely on pre-built artifacts under `dist/` to point to a new location if you change where zkeys are stored.
-
-If you'd like, I can:
-
-- (A) Add a small maintenance script `circuits/scripts/rotate-zkey.sh` that runs the commands above and archives the previous zkey.
-- (B) Remove the listed helper scripts and open a PR with the deletions (I will first verify none of them are referenced by CI or other scripts).
-
-Tell me which option you prefer and I'll implement it.

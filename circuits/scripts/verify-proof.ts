@@ -63,15 +63,14 @@ function runCommand(command: string, description: string): string {
     );
   }
 }
-
-function validateJsonFile(path: string, name: string): any {
+function validateJsonFile(path: string, name: string) {
   if (!existsSync(path)) {
     throw new Error(`${name} not found at ${path}`);
   }
   try {
     const raw = readFileSync(path, 'utf8');
     return JSON.parse(raw);
-  } catch (e) {
+  } catch {
     throw new Error(`${name} at ${path} is not valid JSON`);
   }
 }
@@ -149,13 +148,11 @@ async function verifyProofWithKey(
         'Proof verification'
       );
       break;
-    } catch (e) {
+    } catch {
       attempts++;
       if (attempts >= RETRY_LIMIT) {
         throw new Error(
-          `Proof verification failed after ${RETRY_LIMIT} attempts: ${
-            (e as Error).message
-          }`
+          `Proof verification failed after ${RETRY_LIMIT} attempts: ${'unknown error'}`
         );
       }
       logger.warn(
@@ -309,7 +306,7 @@ async function verifyAllProofsBatch() {
     if (!proofsByCircuit.has(circuitName)) {
       proofsByCircuit.set(circuitName, []);
     }
-    proofsByCircuit.get(circuitName)!.push({
+    proofsByCircuit.get(circuitName).push({
       proofDir: dir,
       proofFile,
       publicFile,

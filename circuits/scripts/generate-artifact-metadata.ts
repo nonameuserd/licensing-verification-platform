@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { circuitLogger as logger } from '../src/lib/logger.js';
 
 function findRepoRoot() {
   let cur = process.cwd();
@@ -53,4 +54,4 @@ for (const f of files) {
 
 const outPath = path.join(outDir, 'artifact-metadata.json');
 fs.writeFileSync(outPath, JSON.stringify(meta, null, 2));
-console.log('Wrote', outPath);
+logger.info('Wrote', outPath);

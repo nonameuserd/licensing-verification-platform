@@ -8,7 +8,7 @@
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readdirSync, copyFileSync, statSync } from 'fs';
 import { join } from 'path';
-import { CircuitLogger } from '../src/lib/logger';
+import { CircuitLogger, logger } from '../src/lib/logger';
 
 const CIRCUIT_NAME = 'ExamProof';
 const BUILD_DIR = join(__dirname, '..', 'build');
@@ -21,16 +21,16 @@ try {
   const candidate14 = join(SETUP_DIR, 'pot14_final.ptau');
   if (existsSync(candidate14)) {
     PTAU_POWER = 14;
-    console.log('Using existing pot14_final.ptau (PTAU_POWER=14)');
+    logger.info('Using existing pot14_final.ptau (PTAU_POWER=14)');
   }
-} catch (_) {
+} catch {
   // keep default
 }
 
 function ensureDirectoryExists(dir: string): void {
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
-    console.log(`Created directory: ${dir}`);
+    logger.info(`Created directory: ${dir}`);
   }
 }
 
@@ -45,10 +45,10 @@ function runCommand(
   try {
     execSync(command, { stdio: 'inherit', cwd: join(__dirname, '..') });
     logger.info(`Completed: ${description}`);
-    console.log(`✅ ${description} completed successfully`);
+    logger.info(`✅ ${description} completed successfully`);
   } catch (error) {
     logger.error(`Failed: ${description}`, error as Error, { command });
-    console.error(`❌ ${description} failed:`, (error as Error).message);
+    logger.error(`❌ ${description} failed:`, (error as Error).message);
     process.exit(1);
   }
 }
@@ -58,7 +58,7 @@ function main(): void {
   const startTime = Date.now();
 
   logger.setupStart('trusted-setup');
-  console.log('🔧 Setting up ZK-SNARK circuit...');
+  logger.info('🔧 Setting up ZK-SNARK circuit...');
 
   try {
     // Ensure directories exist
@@ -70,7 +70,7 @@ function main(): void {
     const r1csPath = join(BUILD_DIR, `${CIRCUIT_NAME}.r1cs`);
     if (!existsSync(r1csPath)) {
       logger.info('Circuit not compiled. Compiling first...');
-      console.log('⚠️  Circuit not compiled. Compiling first...');
+      logger.warn('⚠️  Circuit not compiled. Compiling first...');
       // Try several likely locations for the circom source (handles dist vs source layouts)
       // Prefer the project's source circuit file in the repo `src/` directory
       // This avoids compiling the dist-bundled copy which may have been transformed
@@ -139,7 +139,7 @@ function main(): void {
     const fileExistsAndNonEmpty = (p: string): boolean => {
       try {
         return existsSync(p) && statSync(p).size > 0;
-      } catch (_) {
+      } catch {
         return false;
       }
     };
@@ -151,7 +151,7 @@ function main(): void {
         fileExistsAndNonEmpty(distVerificationKey))
     ) {
       logger.info('Found existing setup artifacts — skipping trusted setup');
-      console.log(
+      logger.info(
         'Setup artifacts already exist. Skipping heavy snarkjs steps.'
       );
 
@@ -168,17 +168,17 @@ function main(): void {
             // created by tests or from earlier runs.
             try {
               if (statSync(srcF).size === 0) {
-                console.warn(`Skipping zero-byte artifact: ${srcF}`);
+                logger.warn(`Skipping zero-byte artifact: ${srcF}`);
                 continue;
               }
-            } catch (_) {
+            } catch {
               // If stat fails, fall back to copying and let it be handled by caller
             }
             copyFileSync(srcF, dstF);
-            console.log(`Mirrored ${srcF} -> ${dstF}`);
+            logger.info(`Mirrored ${srcF} -> ${dstF}`);
           } catch (e) {
             // non-fatal
-            console.warn(
+            logger.warn(
               `Failed to mirror ${srcF} to ${dstF}: ${(e as Error).message}`
             );
           }
@@ -203,7 +203,7 @@ function main(): void {
                 try {
                   copyFileSync(srcPath, dstPath);
                 } catch (e) {
-                  console.warn(
+                  logger.warn(
                     `Failed to copy ${srcPath} -> ${dstPath}: ${
                       (e as Error).message
                     }`
@@ -215,9 +215,9 @@ function main(): void {
 
           try {
             copyDirRecursive(BUILD_DIR, distBuildPath);
-            console.log(`Mirrored build/ -> ${distBuildPath}`);
+            logger.info(`Mirrored build/ -> ${distBuildPath}`);
           } catch (e) {
-            console.warn(
+            logger.warn(
               `Failed to mirror build to dist: ${(e as Error).message}`
             );
           }
@@ -228,9 +228,9 @@ function main(): void {
         const artifactsDir = join(process.cwd(), 'artifacts');
         if (!existsSync(artifactsDir)) {
           ensureDirectoryExists(artifactsDir);
-          console.log(`Created artifacts directory: ${artifactsDir}`);
+          logger.info(`Created artifacts directory: ${artifactsDir}`);
         }
-      } catch (e) {
+      } catch {
         // ignore mirroring errors
       }
 
@@ -261,8 +261,8 @@ function main(): void {
         logger.info('Using prebuilt Powers of Tau final from dist', {
           distFinalPtau,
         });
-        console.log(
-          `ℹ️  Using prebuilt ${distFinalPtau} — skipping powersoftau steps`
+        logger.info(
+          `Using prebuilt ${distFinalPtau} — skipping powersoftau steps`
         );
       } catch (e) {
         // If copy fails, fall back to generating locally
@@ -323,16 +323,16 @@ function main(): void {
           const dstF = join(distSetupPath, f);
           try {
             copyFileSync(srcF, dstF);
-            console.log(`Mirrored ${srcF} -> ${dstF}`);
+            logger.info(`Mirrored ${srcF} -> ${dstF}`);
           } catch (e) {
             // non-fatal
-            console.warn(
+            logger.warn(
               `Failed to mirror ${srcF} to ${dstF}: ${(e as Error).message}`
             );
           }
         }
       }
-    } catch (e) {
+    } catch {
       // ignore mirroring errors
     }
 
@@ -360,7 +360,7 @@ function main(): void {
       error: (error as Error).message,
     });
 
-    console.error('❌ Setup failed:', (error as Error).message);
+    logger.error('❌ Setup failed:', (error as Error).message);
     process.exit(1);
   }
 }

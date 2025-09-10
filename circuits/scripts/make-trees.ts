@@ -8,6 +8,7 @@ import {
   generateCredentialLeaf,
   generateNullifierLeaf,
 } from './merkle-helper';
+import { circuitLogger as logger } from '../src/lib/logger.js';
 
 async function main() {
   await initPoseidon();
@@ -17,13 +18,13 @@ async function main() {
   if (!existsSync(TREES_DIR)) mkdirSync(TREES_DIR, { recursive: true });
 
   const TREE_HEIGHT = process.env['MERKLE_TREE_HEIGHT']
-    ? parseInt(process.env['MERKLE_TREE_HEIGHT']!, 10)
+    ? parseInt(process.env['MERKLE_TREE_HEIGHT'], 10)
     : 4;
   const CREDENTIAL_INDEX = process.env['CREDENTIAL_LEAF_INDEX']
-    ? parseInt(process.env['CREDENTIAL_LEAF_INDEX']!, 10)
+    ? parseInt(process.env['CREDENTIAL_LEAF_INDEX'], 10)
     : 0;
   const NULLIFIER_INDEX = process.env['NULLIFIER_LEAF_INDEX']
-    ? parseInt(process.env['NULLIFIER_LEAF_INDEX']!, 10)
+    ? parseInt(process.env['NULLIFIER_LEAF_INDEX'], 10)
     : 0;
 
   // Read credential inputs from env or use sensible defaults for local/dev
@@ -55,7 +56,7 @@ async function main() {
 
   const credPath = join(TREES_DIR, 'credential-tree.json');
   writeFileSync(credPath, JSON.stringify(credTree, null, 2));
-  console.log(`Wrote credential tree: ${credPath}`);
+  logger.info(`Wrote credential tree: ${credPath}`);
 
   // Build nullifier leaves
   const nullLeaves: (string | number)[] = new Array(N).fill('0');
@@ -73,12 +74,12 @@ async function main() {
 
   const nullPath = join(TREES_DIR, 'nullifier-tree.json');
   writeFileSync(nullPath, JSON.stringify(nullTree, null, 2));
-  console.log(`Wrote nullifier tree: ${nullPath}`);
+  logger.info(`Wrote nullifier tree: ${nullPath}`);
 
-  console.log('Done');
+  logger.info('Done');
 }
 
 main().catch((e) => {
-  console.error(e);
+  logger.error(e);
   process.exit(1);
 });

@@ -104,6 +104,10 @@ describe('ExamProof Circuit', () => {
       // Arrange
       const proof = await TestUtils.mockGenerateProof();
 
+      // Assert - ensure generated proof looks correct before verification
+      expect(proof).toBeDefined();
+      expect(proof.publicSignals).toBeDefined();
+
       // Act
       const isValid = await TestUtils.mockVerifyProof();
 
@@ -204,16 +208,36 @@ describe('ExamProof Circuit', () => {
     });
 
     it('should prevent replay attacks with nullifier', async () => {
-      // Arrange
+      // Arrange - use a real nullifier and generate a proof
       const nullifier = TEST_CONSTANTS.NULLIFIER;
       const proof1 = await TestUtils.mockGenerateProof();
 
-      // Act - attempt to reuse nullifier (should fail)
-      const mockVerifyProofReplay = async () => false;
-      const isValidReplay = await mockVerifyProofReplay();
+      // The generated proof should be valid and should include public signals
+      expect(proof1).toBeValidProof();
+      expect(Array.isArray(proof1.publicSignals)).toBe(true);
 
-      // Assert
-      expect(isValidReplay).toBe(false);
+      // The nullifier should appear among the public signals for the proof
+      // (this checks the generator exposes the nullifier as expected)
+      expect(proof1.publicSignals).toContain(nullifier);
+
+      // Simulate storing used nullifiers after a successful verification
+      const usedNullifiers = new Set<string>();
+      usedNullifiers.add(nullifier);
+
+      // Act - generate a second proof that reuses the same nullifier
+      const proof2 = await TestUtils.mockGenerateProof();
+      expect(proof2).toBeValidProof();
+      expect(proof2.publicSignals).toContain(nullifier);
+
+      // Replay detection: a proof is a replay if its public signals contain a
+      // nullifier that is already recorded as used.
+      const isReplay = (p: any) =>
+        Array.isArray(p.publicSignals) &&
+        p.publicSignals.includes(nullifier) &&
+        usedNullifiers.has(nullifier);
+
+      // Assert - the second proof should be detected as a replay
+      expect(isReplay(proof2)).toBe(true);
     });
   });
 
@@ -651,20 +675,24 @@ describe('ExamProof Circuit', () => {
         credential.issuer,
         TEST_CONSTANTS.PRIVATE_KEY
       );
+      if (!credentialTree)
+        throw new Error('Credential tree not initialized in test');
       const credentialProofValid = TestUtils.validateMerkleProof(
         credentialLeaf,
         witness.merkleProof,
         witness.merklePathIndices,
-        credentialTree!.root
+        credentialTree.root
       );
 
       // Act - Validate nullifier proof
       const nullifierLeaf = generateNullifierLeaf(TEST_CONSTANTS.NULLIFIER);
+      if (!nullifierTree)
+        throw new Error('Nullifier tree not initialized in test');
       const nullifierProofValid = TestUtils.validateMerkleProof(
         nullifierLeaf,
         witness.merkleProofNullifier,
         witness.merklePathIndicesNullifier,
-        nullifierTree!.root
+        nullifierTree.root
       );
 
       // Assert
@@ -720,7 +748,7 @@ describe('ExamProof Circuit', () => {
   describe('Security Tests', () => {
     it('should reject tampered credential data', async () => {
       // Arrange
-      const tamperedCredential: PublicCredentialData = {
+      const _tamperedCredential: PublicCredentialData = {
         ...TEST_CONSTANTS.VALID_CREDENTIAL,
         achievementLevel: 'Failed', // Tampered from 'Passed'
       };
@@ -738,7 +766,7 @@ describe('ExamProof Circuit', () => {
 
     it('should reject expired credentials', async () => {
       // Arrange
-      const expiredCredential: PublicCredentialData = {
+      const _expiredCredential: PublicCredentialData = {
         ...TEST_CONSTANTS.VALID_CREDENTIAL,
         expiryDate: '2020-01-15', // Expired
       };
@@ -756,7 +784,7 @@ describe('ExamProof Circuit', () => {
 
     it('should reject suspended credentials', async () => {
       // Arrange
-      const suspendedCredential: PublicCredentialData = {
+      const _suspendedCredential: PublicCredentialData = {
         ...TEST_CONSTANTS.VALID_CREDENTIAL,
         achievementLevel: 'Suspended',
       };

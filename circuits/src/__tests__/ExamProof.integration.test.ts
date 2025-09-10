@@ -20,7 +20,6 @@ describe('ExamProof Circuit Integration Tests', () => {
     it('should complete full verification flow for valid credential', async () => {
       // Arrange
       const credential = TEST_CONSTANTS.VALID_CREDENTIAL;
-      const privateKey = TEST_CONSTANTS.PRIVATE_KEY;
       const nullifier = TEST_CONSTANTS.NULLIFIER;
 
       logger.audit('verification-flow-started', {
@@ -74,7 +73,6 @@ describe('ExamProof Circuit Integration Tests', () => {
     it('should fail verification flow for invalid credential', async () => {
       // Arrange
       const credential = TEST_CONSTANTS.INVALID_CREDENTIAL;
-      const privateKey = TEST_CONSTANTS.PRIVATE_KEY;
       const nullifier = TEST_CONSTANTS.NULLIFIER;
 
       // Act - Step 1: Compile circuit
@@ -326,6 +324,9 @@ describe('ExamProof Circuit Integration Tests', () => {
         credential,
         TEST_CONSTANTS.NULLIFIER
       );
+
+      // Sanity-use the witness to avoid unused-var lint
+      expect(witness).toHaveValidWitness();
 
       // Create a mock that throws an error
       const mockGenerateProofWithError = async () => {

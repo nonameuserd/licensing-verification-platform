@@ -51,5 +51,3 @@ Notes and troubleshooting
 - The generator detects canonical-output and prints a machine-friendly `CANONICAL_PATH=` line with the path it wrote; if the test can't find the canonical file make sure the generator completed successfully and that `CANONICAL_PATH` points inside `circuits/proofs/`.
 - The Merkle tree files must match the `TreeFileData` shape exactly. Layers should be strings (decimal or hex field elements).
 - If you see `Credential proof valid: false` or `Nullifier proof valid: false` in generator output after using test trees, that's expected for synthetic test trees where the leaf/value used for proof generation doesn't match a production tree - but shape validation and most tests only assert canonical input shapes and presence of the proof object.
-
-If you want me to commit the helper scripts or add a CI job that regenerates these trees before running the tests, say so and I'll prepare a small Git commit + CI tweak.

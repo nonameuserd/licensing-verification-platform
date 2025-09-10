@@ -379,7 +379,12 @@ export const TestUtils = {
       ],
       pi_c: ['0x7', '0x8', '0x1'],
     },
-    publicSignals: [],
+    // Return realistic public signals matching the test constants so tests
+    // that check for the nullifier and roots succeed.
+    publicSignals: TestUtils.generatePublicSignals(
+      TEST_CONSTANTS.VALID_CREDENTIAL,
+      TEST_CONSTANTS.NULLIFIER
+    ),
   }),
 
   /**

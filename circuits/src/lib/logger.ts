@@ -73,6 +73,7 @@ const CIRCUIT_LOGGER_CONFIG: Partial<PrivacyLoggerConfig> = {
   redactPaths: CIRCUIT_REDACTION_PATHS,
   auditMode: true,
   environment: process.env['NODE_ENV'] || 'development',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customRedactor: (object: any) => {
     // Additional circuit-specific redaction
     if (object && typeof object === 'object') {
@@ -155,6 +156,7 @@ export class CircuitLogger {
   /**
    * Log circuit compilation events
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   compilationStart(config: any): void {
     this.logger.info('Circuit compilation started', {
       circuitName: config.circuitName,
@@ -163,6 +165,7 @@ export class CircuitLogger {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   compilationComplete(result: any): void {
     this.logger.info('Circuit compilation completed', {
       compilationTime: result.compilationTime,
@@ -171,6 +174,7 @@ export class CircuitLogger {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   compilationError(error: Error, config: any): void {
     this.logger.error('Circuit compilation failed', error, {
       circuitName: config.circuitName,
@@ -291,6 +295,7 @@ export class CircuitLogger {
   /**
    * Log performance metrics
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   performance(operation: string, duration: number, metadata?: any): void {
     this.logger.performance(operation, duration, metadata);
   }
@@ -298,6 +303,7 @@ export class CircuitLogger {
   /**
    * Log security events
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   security(event: string, data: any): void {
     this.logger.security(event, {
       ...data,
@@ -308,6 +314,7 @@ export class CircuitLogger {
   /**
    * Log audit events for compliance
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   audit(event: string, data: any): void {
     this.logger.audit(event, {
       ...data,

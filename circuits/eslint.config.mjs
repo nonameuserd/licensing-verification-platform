@@ -1,4 +1,4 @@
-import baseConfig from '../../eslint.config.mjs';
+import baseConfig from '../eslint.config.mjs';
 
 export default [
   ...baseConfig,
@@ -11,7 +11,7 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_' },
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
     },
   },

@@ -89,7 +89,7 @@ describe('generate-proof canonical input vs .sym', () => {
           stdio: 'inherit',
           timeout: 120000,
         });
-      } catch (err) {
+      } catch {
         // If anything goes wrong, avoid running the workspace-wide `yarn build`
         // because it may trigger unrelated e2e/playwright jobs that fail in
         // the test environment. Instead run targeted Nx builds for the
@@ -104,7 +104,7 @@ describe('generate-proof canonical input vs .sym', () => {
               timeout: 600000,
             }
           );
-        } catch (e) {
+        } catch {
           // As a last resort, compile circuits TypeScript directly to avoid
           // workspace-wide side effects.
           execSync('tsc -p tsconfig.json', {
@@ -150,7 +150,7 @@ describe('generate-proof canonical input vs .sym', () => {
           break;
         }
       }
-    } catch (e) {
+    } catch {
       // ignore file-check failures; fall back to attempting the generator
     }
 
@@ -162,7 +162,7 @@ describe('generate-proof canonical input vs .sym', () => {
         try {
           if (!existsSync(cjsPath)) copyFileSync(compiledGenerator, cjsPath);
           toRun = cjsPath;
-        } catch (e) {
+        } catch {
           toRun = compiledGenerator;
         }
       }
@@ -172,7 +172,7 @@ describe('generate-proof canonical input vs .sym', () => {
         const distPkg = join(CIRCUITS_DIR, 'dist', 'package.json');
         if (!existsSync(distPkg))
           writeFileSync(distPkg, JSON.stringify({ type: 'commonjs' }));
-      } catch (e) {
+      } catch {
         // ignore
       }
 
@@ -182,7 +182,7 @@ describe('generate-proof canonical input vs .sym', () => {
         if (!existsSync(setupDir)) mkdirSync(setupDir, { recursive: true });
         const provingKey = join(setupDir, `${CIRCUIT_NAME}_0001.zkey`);
         if (!existsSync(provingKey)) writeFileSync(provingKey, '');
-      } catch (e) {
+      } catch {
         // ignore
       }
 
@@ -196,7 +196,7 @@ describe('generate-proof canonical input vs .sym', () => {
           timeout: 120000,
         });
         ran = true;
-      } catch (err) {
+      } catch {
         // ignore and fall back to ts-node below
       }
     }
@@ -214,7 +214,7 @@ describe('generate-proof canonical input vs .sym', () => {
           }
         );
         ran = true;
-      } catch (e) {
+      } catch {
         try {
           execSync('npx ts-node scripts/generate-proof.ts', {
             cwd: CIRCUITS_DIR,
@@ -223,7 +223,7 @@ describe('generate-proof canonical input vs .sym', () => {
             timeout: 120000,
           });
           ran = true;
-        } catch (err) {
+        } catch {
           // will fall back to compiled block below if present
         }
       }
@@ -260,7 +260,7 @@ describe('generate-proof canonical input vs .sym', () => {
           break;
         }
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -288,7 +288,7 @@ describe('generate-proof canonical input vs .sym', () => {
         try {
           const marker = markerCandidates[0];
           canonicalPath = fs.readFileSync(marker, 'utf8').trim();
-        } catch (e) {
+        } catch {
           // ignore read errors and fall back to mtime search below
           canonicalPath = null;
         }
@@ -312,7 +312,7 @@ describe('generate-proof canonical input vs .sym', () => {
               latestMtime = st.mtimeMs;
               latestFullPath = p;
             }
-          } catch (e) {
+          } catch {
             // ignore unreadable entries
           }
         }
@@ -393,7 +393,7 @@ describe('generate-proof canonical input vs .sym', () => {
         try {
           // try graceful termination first
           process.kill(pid, 'SIGTERM');
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -405,19 +405,19 @@ describe('generate-proof canonical input vs .sym', () => {
           try {
             process.kill(pid, 0);
             alive.push(pid);
-          } catch (e) {
+          } catch {
             // not alive
           }
         }
         for (const pid of alive) {
           try {
             process.kill(pid, 'SIGKILL');
-          } catch (e) {
+          } catch {
             // ignore
           }
         }
       }
-    } catch (e) {
+    } catch {
       // best-effort only; don't fail tests because cleanup failed
     }
   });

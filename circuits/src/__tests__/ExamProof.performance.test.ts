@@ -6,22 +6,23 @@
 import { TestUtils, TEST_CONSTANTS } from './setup';
 import { CircuitLogger } from '../lib/logger';
 
+// Performance buffer values can be relaxed in CI via env vars. Defaults to 0 locally.
+const PERF_TEST_BUFFER_MS = Number(process.env['PERF_TEST_BUFFER_MS'] || 0);
+const PERF_TEST_MEMORY_BUFFER_BYTES = Number(
+  process.env['PERF_TEST_MEMORY_BUFFER_BYTES'] || 0
+);
+
 // CI-only configurable buffers: defaults are 0 for local runs so developers
 // see strict thresholds. CI can set these env vars to relax timing/memory
 // assertions on slower runners.
-const PERF_TEST_BUFFER_MS = Number(process.env['PERF_TEST_BUFFER_MS'] || '0'); // 0ms default locally
-const PERF_TEST_MEMORY_BUFFER_BYTES = Number(
-  process.env['PERF_TEST_MEMORY_BUFFER_BYTES'] || '0'
-); // 0 bytes default locally
+// 0 bytes default locally
 
 describe('ExamProof Circuit Performance Tests', () => {
   let logger: CircuitLogger;
-
   beforeEach(() => {
-    logger = new CircuitLogger('performance-test');
-    logger.info('Performance test started', {
-      testName: expect.getState().currentTestName,
-    });
+    // CircuitLogger constructor only accepts the operation name.
+    // Tests may include additional context via custom log metadata when needed.
+    logger = new CircuitLogger('ExamProof-performance-test');
   });
 
   describe('Single Verification Performance', () => {
@@ -112,6 +113,7 @@ describe('ExamProof Circuit Performance Tests', () => {
       const startTime = performance.now();
 
       // Act
+
       const results = await Promise.all(
         credentials.map(async (credential) => {
           const witness = TestUtils.generateWitness(
@@ -123,6 +125,9 @@ describe('ExamProof Circuit Performance Tests', () => {
           return { credential, witness, proof, isValid };
         })
       );
+
+      // Use the results here to avoid unused variable lint
+      expect(results.length).toBe(batchSize);
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -362,6 +367,13 @@ describe('ExamProof Circuit Performance Tests', () => {
             return { credential, witness, proof, isValid };
           })
         );
+
+        expect(results).toHaveLength(batchSize);
+        results.forEach((result) => {
+          expect(result.witness).toHaveValidWitness();
+          expect(result.proof).toBeValidProof();
+          expect(result.isValid).toBe(true);
+        });
 
         const endTime = performance.now();
         const duration = endTime - startTime;

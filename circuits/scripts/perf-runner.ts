@@ -2,6 +2,7 @@
 import { spawnSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { circuitLogger as logger } from '../src/lib/logger.js';
 
 const root = path.resolve(__dirname, '..', '..');
 const baselinePath = path.join(root, 'circuits', 'perf', 'baseline.json');
@@ -12,7 +13,7 @@ function nowMs() {
 }
 
 if (!fs.existsSync(baselinePath)) {
-  console.error('Baseline file not found at', baselinePath);
+  logger.error('Baseline file not found at', baselinePath);
   process.exit(2);
 }
 const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
@@ -26,11 +27,11 @@ const witnessJs = path.join(
   'generate_witness.js'
 );
 if (!fs.existsSync(witnessJs)) {
-  console.warn('witness generator not found, skipping perf test');
+  logger.warn('witness generator not found, skipping perf test');
   process.exit(0);
 }
 
-console.log('Running witness generation perf test');
+logger.info('Running witness generation perf test');
 const start = nowMs();
 const res = spawnSync(
   'node',
@@ -43,10 +44,10 @@ const res = spawnSync(
 );
 const dur = nowMs() - start;
 if (res.status !== 0) {
-  console.error('witness generation failed');
+  logger.error('witness generation failed');
   process.exit(res.status || 1);
 }
-console.log('witness generation time (ms):', dur);
+logger.info('witness generation time (ms):', dur);
 
 const threshold = Number(
   process.env['PERF_THRESHOLD_PERCENT'] || baseline.threshold_percent || 20
@@ -67,17 +68,17 @@ try {
     path.join(artifactsPath, 'perf-result.json'),
     JSON.stringify(result, null, 2)
   );
-  console.log('Wrote perf-result.json');
+  logger.info('Wrote perf-result.json');
 } catch (e) {
-  console.warn('Failed to write perf artifact', e);
+  logger.warn('Failed to write perf artifact', e);
 }
 
 if (dur > allowed) {
-  console.error(
+  logger.error(
     `PERF REGRESSION: ${dur}ms > allowed ${allowed}ms (+${threshold}%)`
   );
   process.exit(5);
 }
 
-console.log('perf check passed');
+logger.info('perf check passed');
 process.exit(0);

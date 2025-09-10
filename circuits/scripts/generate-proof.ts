@@ -1130,7 +1130,7 @@ async function main() {
         try {
           // Emit a single-line machine-parseable stdout marker to help
           // test runners capture the canonical path without scanning.
-          // Keep this as plain console.log so `execSync` callers can read it.
+          // Keep this as plain logger.info so `execSync` callers can read it.
           // Example: CANONICAL_PATH=/abs/path/to/canonical-input.json
           logger.info(`CANONICAL_PATH=${canonicalPath}`);
         } catch (e) {

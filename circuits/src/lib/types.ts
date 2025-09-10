@@ -123,6 +123,7 @@ export interface ErrorResult {
   code: string;
   message: string;
   timestamp: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any;
 }
 
