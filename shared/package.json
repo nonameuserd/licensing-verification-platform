@@ -1,0 +1,13 @@
+{
+  "name": "@licensing-verification-platform/shared",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "npx nx build shared"
+  },
+  "dependencies": {
+    "pino": "^9.9.4"
+  }
+}

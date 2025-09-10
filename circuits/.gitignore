@@ -1,0 +1,7 @@
+# Ignore built distribution artifacts. CI is the source of truth.
+/dist/**
+!/dist/README.md
+!/dist/package.json
+
+# Ignore compiled build artifacts that should not be committed
+/build/

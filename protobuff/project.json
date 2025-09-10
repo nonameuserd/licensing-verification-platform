@@ -12,7 +12,7 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/protobuff",
+        "outputPath": "protobuff/dist",
         "main": "protobuff/src/index.ts",
         "tsConfig": "protobuff/tsconfig.lib.json",
         "assets": ["protobuff/src/verification.proto"]

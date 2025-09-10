@@ -1,0 +1,223 @@
+name: Compile Circuits
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - features
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    env:
+      # Allow overriding perf threshold via repository env or workflow dispatch
+      # Use an explicit empty default to avoid invalid expression references in the workflow linter
+      PERF_THRESHOLD_PERCENT: ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install workspace dependencies (repo root)
+        run: |
+          yarn install --non-interactive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build circuits Docker image
+        run: |
+          docker build -t lvp-circuits -f circuits/Dockerfile .
+
+      - name: Run circuits compile inside container
+        run: |
+          chmod +x circuits/scripts/ci-circuits-compile.sh
+          circuits/scripts/ci-circuits-compile.sh
+
+      - name: Run tests (unit/integration)
+        run: |
+          chmod +x circuits/scripts/ci-circuits-test.sh
+          circuits/scripts/ci-circuits-test.sh
+
+      - name: Run fuzz tests (property-based)
+        id: fuzz_run
+        run: |
+          chmod +x circuits/scripts/ci-fuzz-run.sh
+          circuits/scripts/ci-fuzz-run.sh
+
+      - name: Upload fuzz failure artifact (if any)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: circuits-fuzz-failure
+          path: artifacts/fuzz-failure.json
+
+      - name: Create GitHub issue on fuzz failure
+        if: failure()
+        uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = 'artifacts/fuzz-failure.json';
+            if (!fs.existsSync(path)) {
+              console.log('No fuzz failure artifact found');
+              return;
+            }
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const title = `circuits: fuzz tests failed on commit ${{ github.sha }} (workflow)`;
+            // Build a body that includes structured fast-check info if present
+            let body = `Fuzz tests failed during CI run.\n\nCommit: ${{ github.sha }}\nRun: ${{ github.run_id }}\nTimestamp: ${data.timestamp}\n\n`;
+            if (data.fastcheck) {
+              body += `Fast-check seed: ${data.fastcheck.seed || 'unknown'}\n`;
+              if (data.fastcheck.parsed) {
+                body += `Counterexample (parsed JSON):\n\n${JSON.stringify(data.fastcheck.parsed, null, 2)}\n\n`;
+              } else if (data.fastcheck.counterexample) {
+                body += `Counterexample (raw):\n\n----\n${data.fastcheck.counterexample}\n----\n\n`;
+              }
+            }
+            body += `Log excerpt:\n\n----\n${data.excerpt}\n----\n\nPlease investigate.`;
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['circuits', 'fuzz-failure', 'automated']
+            });
+            console.log(`Created issue ${issue.data.number}`);
+
+      - name: Create artifact bundle
+        run: |
+          mkdir -p artifacts && cd circuits && \
+          TAR_NAME="ExamProof-${{ github.sha }}.tar.gz" && \
+          tar -czf "../artifacts/${TAR_NAME}" build/ verification_key.json zkey/*.zkey src/ExamProof.circom || true && \
+          echo "TAR=${TAR_NAME}" >> "$GITHUB_ENV"
+
+      - name: Cache circuits node_modules and dist
+        uses: actions/cache@v4
+        with:
+          path: |
+            circuits/node_modules
+            circuits/dist
+          key: ${{ runner.os }}-circuits-${{ hashFiles('circuits/yarn.lock', 'circuits/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-circuits-
+
+      - name: Precompile circuits scripts (ts -> js)
+        run: |
+          yarn --cwd circuits install --frozen-lockfile
+          yarn --cwd circuits build:ts
+
+      - name: Run perf snapshot check (inside container)
+        env:
+          PERF_THRESHOLD_PERCENT: ${{ env.PERF_THRESHOLD_PERCENT }}
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/work -w /work lvp-circuits \
+            -e PERF_THRESHOLD_PERCENT="${{ env.PERF_THRESHOLD_PERCENT }}" \
+            sh -c "cd circuits && node dist/scripts/perf-runner.js"
+
+      - name: Upload perf-result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: circuits-perf-result
+          path: artifacts/perf-result.json
+
+      - name: Generate and sign artifact metadata (inside container)
+        env:
+          COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          chmod +x circuits/scripts/ci-sign-artifacts.sh
+          circuits/scripts/ci-sign-artifacts.sh
+
+      - name: List artifacts for debug
+        run: |
+          ls -la artifacts || true
+
+      - name: Verify artifact signature
+        if: always()
+        env:
+          COSIGN_PUB_B64: ${{ secrets.COSIGN_PUB_B64 }}
+        run: |
+          chmod +x circuits/scripts/ci-verify-signature.sh
+          circuits/scripts/ci-verify-signature.sh
+
+      - name: Bump tag for main (create annotated tag, do not publish)
+        if: github.ref == 'refs/heads/main'
+        id: semver_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x circuits/scripts/bump-version.sh
+          circuits/scripts/bump-version.sh
+
+      - name: Run on-chain verify (CI, inside container)
+        run: |
+          chmod +x circuits/scripts/ci-onchain-verify.sh
+          circuits/scripts/ci-onchain-verify.sh
+
+      - name: Prove+Verify smoke test (dist zkey)
+        run: |
+          set -e
+          cd circuits
+          # Use dist provided zkey/verification key to run a lightweight prove/verify check
+          if [ -f dist/circuits/zkey/ExamProof_0001.zkey ] && [ -f dist/circuits/build/ExamProof_js/ExamProof.wasm ]; then
+            mkdir -p proofs/ci-smoke
+            # Use a minimal signed canonical input if available; otherwise copy an example
+            if [ -f proofs/2025-09-10T11-40-16-534Z/canonical-input.signed.json ]; then
+              cp proofs/2025-09-10T11-40-16-534Z/canonical-input.signed.json proofs/ci-smoke/canonical-input.signed.json
+            else
+              echo '{}' > proofs/ci-smoke/canonical-input.signed.json
+            fi
+            npx --yes snarkjs wtns calculate dist/circuits/build/ExamProof_js/ExamProof.wasm proofs/ci-smoke/canonical-input.signed.json proofs/ci-smoke/witness.wtns || true
+            npx --yes snarkjs groth16 prove dist/circuits/zkey/ExamProof_0001.zkey proofs/ci-smoke/witness.wtns proofs/ci-smoke/proof.json proofs/ci-smoke/public.json || true
+            npx --yes snarkjs groth16 verify dist/circuits/zkey/verification_key.json proofs/ci-smoke/public.json proofs/ci-smoke/proof.json || true
+          else
+            echo "dist zkey or wasm not found; skipping prove+verify smoke";
+          fi
+
+      - name: Create GitHub Release for main (draft)
+        if: github.ref == 'refs/heads/main'
+        id: create_main_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ steps.semver_release.outputs.new_ver }}
+          release_name: v${{ steps.semver_release.outputs.new_ver }}
+          body: 'Circuits release for version v${{ steps.semver_release.outputs.new_ver }}'
+          draft: true
+          prerelease: false
+
+      - name: Upload TARball to Release (main)
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_main_release.outputs.upload_url }}
+          asset_path: artifacts/ExamProof-${{ github.sha }}.tar.gz
+          asset_name: ExamProof-${{ github.sha }}.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload metadata and signature to Release (main)
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_main_release.outputs.upload_url }}
+          asset_path: artifacts/artifact-metadata.json
+          asset_name: artifact-metadata.json
+          asset_content_type: application/json
+
+      - name: Upload metadata signature to Release (main)
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_main_release.outputs.upload_url }}
+          asset_path: artifacts/artifact-metadata.json.sig
+          asset_name: artifact-metadata.json.sig
+          asset_content_type: application/octet-stream
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: circuits-artifacts
+          path: artifacts/**

@@ -1,0 +1,48 @@
+name: circuits-smoke
+
+on:
+  push:
+    paths:
+      - 'circuits/**'
+      - '.github/workflows/circuits-smoke.yml'
+  pull_request:
+    paths:
+      - 'circuits/**'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install repo deps
+        run: |
+          yarn install --frozen-lockfile
+
+      - name: Build circuits TypeScript
+        working-directory: circuits
+        run: |
+          yarn build:ts
+
+      - name: Run generate-proof in INPUT_ONLY mode
+        working-directory: circuits
+        env:
+          INPUT_ONLY: '1'
+          HOLDER_NAME: 'CI Test'
+          LICENSE_NUMBER: 'CI000'
+          EXAM_ID: 'CI_TEST'
+          ACHIEVEMENT_LEVEL: 'Passed'
+          ISSUED_DATE: '2024-01-01'
+          EXPIRY_DATE: '2025-01-01'
+          ISSUER: 'CI'
+          HOLDER_DOB: '1990-01-01'
+          NULLIFIER: '0x1'
+          PRIVATE_KEY: '0x2'
+        run: |
+          /usr/bin/env ts-node scripts/generate-proof.ts

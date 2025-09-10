@@ -6,46 +6,35 @@
   "tags": [],
   "targets": {
     "prune-lockfile": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": true,
       "executor": "@nx/js:prune-lockfile",
       "outputs": [
-        "{workspaceRoot}/dist/backend/package.json",
-        "{workspaceRoot}/dist/backend/yarn.lock"
+        "{workspaceRoot}/backend/dist/package.json",
+        "{workspaceRoot}/backend/dist/yarn.lock"
       ],
       "options": {
         "buildTarget": "build"
       }
     },
     "copy-workspace-modules": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": true,
-      "outputs": [
-        "{workspaceRoot}/dist/backend/workspace_modules"
-      ],
+      "outputs": ["{workspaceRoot}/backend/dist/workspace_modules"],
       "executor": "@nx/js:copy-workspace-modules",
       "options": {
         "buildTarget": "build"
       }
     },
     "prune": {
-      "dependsOn": [
-        "prune-lockfile",
-        "copy-workspace-modules"
-      ],
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
       "executor": "nx:noop"
     },
     "serve": {
       "continuous": true,
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "options": {
         "buildTarget": "backend:build",
         "runBuildTargetDependencies": false

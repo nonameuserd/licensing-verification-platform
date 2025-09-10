@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es2015",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "baseUrl": "../..",
+    "paths": {
+      "@licensing-verification-platform/shared": ["shared/dist/src/index"]
+    }
+  },
+  "ts-node": {
+    "esm": false,
+    "experimentalSpecifierResolution": "node",
+    "require": ["tsconfig-paths/register"],
+    "files": true
+  }
+}

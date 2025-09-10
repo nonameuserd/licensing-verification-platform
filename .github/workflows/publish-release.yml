@@ -1,0 +1,22 @@
+name: Publish Circuits Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://github.com/${{ github.repository }}/releases
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Require approval and publish draft release
+        run: |
+          echo "This workflow is intended to be manually dispatched after a draft release is reviewed."
+          chmod +x circuits/scripts/publish-release.sh
+          circuits/scripts/publish-release.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}

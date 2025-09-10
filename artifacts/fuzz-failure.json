@@ -1,0 +1,6 @@
+{
+  "timestamp": "2025-09-08T22:38:21.237Z",
+  "logPath": "/Users/dami/Documents/licensing-verification-platform/circuits/fuzz-jest.log",
+  "error": "log_not_found",
+  "message": "Log file not found at /Users/dami/Documents/licensing-verification-platform/circuits/fuzz-jest.log"
+}
