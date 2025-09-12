@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -172,7 +172,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -231,25 +231,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Network configurations for different environments
@@ -266,7 +266,7 @@ export interface NetworksConfig {
   [key: string]: NetworkConfig;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >NETWORKS = {</span>
+export const NETWORKS = {
   development: {
     sepolia: {
       name: 'Sepolia',
@@ -325,25 +325,25 @@ export const <span class="cstat-no" title="statement not covered" >NETWORKS = {<
   },
 } as const;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >g</span>etNetwork(</span>
+export function getNetwork(
   environment: string,
   networkName: string
 ): NetworkConfig {
-  const availableNetworks = <span class="cstat-no" title="statement not covered" >NETWORKS[environment as keyof typeof NETWORKS];</span>
-<span class="cstat-no" title="statement not covered" >  if (</span>
+  const availableNetworks = NETWORKS[environment as keyof typeof NETWORKS];
+  if (
     !availableNetworks ||
     !availableNetworks[networkName as keyof typeof availableNetworks]
   ) {
-<span class="cstat-no" title="statement not covered" >    throw new Error(</span>
+    throw new Error(
       `Unknown network: ${networkName} for environment: ${environment}`
     );
   }
-<span class="cstat-no" title="statement not covered" >  return availableNetworks[networkName as keyof typeof availableNetworks];</span>
+  return availableNetworks[networkName as keyof typeof availableNetworks];
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >g</span>etAvailableNetworks(</span>environment: string): string[] {
-  const availableNetworks = <span class="cstat-no" title="statement not covered" >NETWORKS[environment as keyof typeof NETWORKS];</span>
-<span class="cstat-no" title="statement not covered" >  return availableNetworks ? Object.keys(availableNetworks) : [];</span>
+export function getAvailableNetworks(environment: string): string[] {
+  const availableNetworks = NETWORKS[environment as keyof typeof NETWORKS];
+  return availableNetworks ? Object.keys(availableNetworks) : [];
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -352,7 +352,7 @@ export const <span class="cstat-no" title="statement not covered" >NETWORKS = {<
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-12T16:54:46.256Z
+                at 2025-09-12T21:52:24.099Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
