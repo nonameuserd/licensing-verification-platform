@@ -171,12 +171,15 @@ export class ExamProofCircuit {
    */
   private async verifyProof(proof: ProofResult): Promise<boolean> {
     // In production, this would use snarkjs to verify actual proof
-    return (
-      proof &&
-      proof.proof &&
-      proof.publicSignals &&
-      proof.publicSignals.length > 0
-    );
+    if (
+      !proof ||
+      !proof.proof ||
+      !proof.publicSignals ||
+      proof.publicSignals.length === 0
+    ) {
+      return false;
+    }
+    return true;
   }
 }
 

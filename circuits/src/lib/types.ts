@@ -3,26 +3,25 @@
  */
 
 export interface CircuitInput {
-  // Public inputs (visible in proof)
-  holderName: string;
-  licenseNumber: string;
-  examId: string;
-  achievementLevel: string;
-  issuedDate: string;
-  expiryDate: string;
-  issuer: string;
-  nullifier: string;
-  credentialRoot: string;
-  nullifierRoot: string;
+  // Public inputs (visible in proof) - matches ExamProof.circom Main template
+  pubKey: [string, string]; // Holder's EdDSA public key
+  credentialRoot: string; // Merkle root of valid credentials
+  nullifierRoot: string; // Merkle root of used nullifiers
+  currentTime: string; // Current timestamp from verifier
+  signatureS: string; // EdDSA signature scalar S
+  signatureR: [string, string]; // EdDSA R point (R8x, R8y)
+  nullifier: string; // Unique nullifier for anti-replay
+  examIdHash: string; // Hashed exam ID
+  achievementLevelHash: string; // Hashed achievement level
+  issuerHash: string; // Hashed issuer identity
 
   // Private inputs (hidden in proof)
-  holderDOB: string;
-  privateKey: string;
-  merkleProof: string[];
-  merklePathIndices: number[];
-  merkleProofNullifier: string[];
-  merklePathIndicesNullifier: number[];
-  storedNullifierLeaf: string;
+  holderSecret: string; // Holder's private commitment
+  merkleProof: string[]; // Proof for credential validity (20 elements)
+  merkleProofNullifier: string[]; // Proof nullifier unused (20 elements)
+  merklePathIndices: string[]; // 0/1 path bits for credential proof (20 elements)
+  merklePathIndicesNullifier: string[]; // path bits for nullifier proof (20 elements)
+  storedNullifierLeaf: string; // actual leaf stored at the nullifier index
 }
 
 export interface PublicCredentialData {

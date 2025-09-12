@@ -4,7 +4,7 @@
  */
 
 import { TestUtils, TEST_CONSTANTS } from '../setup';
-import { CircuitLogger, logger } from '../../lib/logger';
+import { CircuitLogger, circuitLogger } from '../../lib/logger';
 import {
   CircuitInput,
   PublicCredentialData,
@@ -33,10 +33,10 @@ export class CircuitTestUtils {
    * Compile the ExamProof circuit
    */
   static async compileCircuit(): Promise<CompilationResult> {
-    const logger = new CircuitLogger('test-circuit-compilation');
+    const circuitLogger = new CircuitLogger('test-circuit-compilation');
     const startTime = performance.now();
 
-    logger.compilationStart({
+    circuitLogger.compilationStart({
       circuitName: 'ExamProof',
       inputPath: 'test',
       outputPath: 'test',
@@ -51,8 +51,8 @@ export class CircuitTestUtils {
       compilationTime,
     };
 
-    logger.compilationComplete(compilationResult);
-    logger.performance('test-circuit-compilation', compilationTime, {
+    circuitLogger.compilationComplete(compilationResult);
+    circuitLogger.performance('test-circuit-compilation', compilationTime, {
       circuitName: 'ExamProof',
     });
 
@@ -66,16 +66,16 @@ export class CircuitTestUtils {
     credential: PublicCredentialData,
     nullifier: string = TEST_CONSTANTS.NULLIFIER
   ): CircuitInput {
-    const logger = new CircuitLogger('test-witness-generation');
+    const circuitLogger = new CircuitLogger('test-witness-generation');
 
-    logger.debug('Generating test witness', {
+    circuitLogger.debug('Generating test witness', {
       credentialId: credential.credentialId,
       hasNullifier: !!nullifier,
     });
 
     const witness = TestUtils.generateWitness(credential, nullifier);
 
-    logger.debug('Test witness generated', {
+    circuitLogger.debug('Test witness generated', {
       credentialId: credential.credentialId,
       publicInputsCount: Object.keys(witness).filter(
         (key) => !key.includes('private')
@@ -89,10 +89,10 @@ export class CircuitTestUtils {
    * Generate proof for a witness
    */
   static async generateProof(witness: CircuitInput): Promise<ProofData> {
-    const logger = new CircuitLogger('test-proof-generation');
+    const circuitLogger = new CircuitLogger('test-proof-generation');
     const startTime = performance.now();
 
-    logger.proofGenerationStart('test-proof');
+    circuitLogger.proofGenerationStart('test-proof');
 
     const proof = await TestUtils.mockGenerateProof();
     const endTime = performance.now();
@@ -103,8 +103,8 @@ export class CircuitTestUtils {
       generationTime,
     };
 
-    logger.proofGenerationComplete('test-proof', generationTime);
-    logger.performance('test-proof-generation', generationTime, {
+    circuitLogger.proofGenerationComplete('test-proof', generationTime);
+    circuitLogger.performance('test-proof-generation', generationTime, {
       witnessKeys: Object.keys(witness),
     });
 
@@ -119,10 +119,10 @@ export class CircuitTestUtils {
     publicSignals: string[],
     credential?: PublicCredentialData
   ): Promise<{ isValid: boolean; verificationTime: number }> {
-    const logger = new CircuitLogger('test-proof-verification');
+    const circuitLogger = new CircuitLogger('test-proof-verification');
     const startTime = performance.now();
 
-    logger.proofVerificationStart('test-proof');
+    circuitLogger.proofVerificationStart('test-proof');
 
     const isValid = await TestUtils.mockVerifyProof(credential);
     const endTime = performance.now();
@@ -133,8 +133,12 @@ export class CircuitTestUtils {
       verificationTime,
     };
 
-    logger.proofVerificationComplete('test-proof', isValid, verificationTime);
-    logger.performance('test-proof-verification', verificationTime, {
+    circuitLogger.proofVerificationComplete(
+      'test-proof',
+      isValid,
+      verificationTime
+    );
+    circuitLogger.performance('test-proof-verification', verificationTime, {
       publicSignalsCount: publicSignals.length,
       isValid,
     });
@@ -149,10 +153,10 @@ export class CircuitTestUtils {
     credential: PublicCredentialData,
     nullifier: string = TEST_CONSTANTS.NULLIFIER
   ): Promise<CircuitTestResult> {
-    const logger = new CircuitLogger('test-credential-verification');
+    const circuitLogger = new CircuitLogger('test-credential-verification');
     const startTime = performance.now();
 
-    logger.credentialValidationStart(credential.credentialId);
+    circuitLogger.credentialValidationStart(credential.credentialId);
 
     try {
       const witness = this.generateWitness(credential, nullifier);
@@ -178,12 +182,12 @@ export class CircuitTestUtils {
         duration,
       };
 
-      logger.credentialValidationComplete(
+      circuitLogger.credentialValidationComplete(
         credential.credentialId,
         verificationResult.isValid,
         []
       );
-      logger.performance('test-credential-verification', duration, {
+      circuitLogger.performance('test-credential-verification', duration, {
         credentialId: credential.credentialId,
         isValid: verificationResult.isValid,
       });
@@ -193,11 +197,18 @@ export class CircuitTestUtils {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      logger.credentialValidationError(error as Error, credential.credentialId);
-      logger.performance('test-credential-verification-failed', duration, {
-        credentialId: credential.credentialId,
-        error: (error as Error).message,
-      });
+      circuitLogger.credentialValidationError(
+        error as Error,
+        credential.credentialId
+      );
+      circuitLogger.performance(
+        'test-credential-verification-failed',
+        duration,
+        {
+          credentialId: credential.credentialId,
+          error: (error as Error).message,
+        }
+      );
 
       return {
         witness: {} as CircuitInput,
@@ -378,7 +389,7 @@ export class CircuitTestUtils {
         operationTimes.push(opEndTime - opStartTime);
         operationsCompleted++;
       } catch (error) {
-        logger.error('Error during stress test operation', error);
+        circuitLogger.error('Error during stress test operation', error);
         errors++;
       }
     };

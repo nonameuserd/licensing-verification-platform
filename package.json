@@ -5,7 +5,13 @@
     "build": "nx run-many --target=build --all",
     "compile-circuits": "docker build -t lvp-circuits -f circuits/Dockerfile circuits && docker run --rm -v $(pwd):/work -w /work lvp-circuits npm run compile --prefix /work/circuits",
     "test": "nx run-many --target=test --all && nx run-many --target=e2e --all",
-    "ci": "yarn install --frozen-lockfile && yarn lint && yarn build && yarn test",
+    "test:coverage": "nx run-many --target=test --all --coverage",
+    "test:coverage:ci": "nx run-many --target=test --all --coverage --ci --watchAll=false",
+    "test:coverage:report": "yarn test:coverage:ci && node scripts/coverage-report.js",
+    "coverage:merge": "nyc merge coverage coverage/merged-coverage.json",
+    "coverage:report": "node scripts/coverage-report.js",
+    "coverage:clean": "rimraf coverage",
+    "ci": "yarn install --frozen-lockfile && yarn lint && yarn build && yarn test:coverage:ci",
     "lint": "nx run-many --target=lint --all",
     "prepare": "husky",
     "pre-commit": "lint-staged"
@@ -93,6 +99,7 @@
     "prettier": "^2.6.2",
     "protoc-gen-ts": "^0.8.7",
     "react-refresh": "^0.10.0",
+    "rimraf": "^5.0.5",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
@@ -101,7 +108,8 @@
     "typescript-eslint": "^8.29.0",
     "vite": "^6.0.0",
     "vitest": "^3.0.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "nyc": "^15.1.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

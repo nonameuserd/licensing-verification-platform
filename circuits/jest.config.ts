@@ -1,6 +1,4 @@
-import { Config } from 'jest';
-
-const config: Config = {
+const config = {
   displayName: 'circuits',
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -22,4 +20,4 @@ const config: Config = {
   },
 };
 
-export default config;
+module.exports = config;

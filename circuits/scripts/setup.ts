@@ -8,7 +8,7 @@
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readdirSync, copyFileSync, statSync } from 'fs';
 import { join } from 'path';
-import { CircuitLogger, logger } from '../src/lib/logger';
+import { CircuitLogger, circuitLogger } from '../src/lib/logger';
 
 const CIRCUIT_NAME = 'ExamProof';
 const BUILD_DIR = join(__dirname, '..', 'build');
@@ -21,7 +21,7 @@ try {
   const candidate14 = join(SETUP_DIR, 'pot14_final.ptau');
   if (existsSync(candidate14)) {
     PTAU_POWER = 14;
-    logger.info('Using existing pot14_final.ptau', { PTAU_POWER: 14 });
+    circuitLogger.info('Using existing pot14_final.ptau', { PTAU_POWER: 14 });
   }
 } catch {
   // keep default
@@ -30,47 +30,47 @@ try {
 function ensureDirectoryExists(dir: string): void {
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
-    logger.info('Created directory', { directory: dir });
+    circuitLogger.info('Created directory', { directory: dir });
   }
 }
 
 function runCommand(
   command: string,
   description: string,
-  logger: CircuitLogger
+  circuitLogger: CircuitLogger
 ): void {
-  logger.info(`Starting: ${description}`);
-  logger.debug('Executing command', { command, description });
+  circuitLogger.info(`Starting: ${description}`);
+  circuitLogger.debug('Executing command', { command, description });
 
   try {
     execSync(command, { stdio: 'inherit', cwd: join(__dirname, '..') });
-    logger.info(`Completed: ${description}`);
-    logger.info(`✅ ${description} completed successfully`);
+    circuitLogger.info(`Completed: ${description}`);
+    circuitLogger.info(`✅ ${description} completed successfully`);
   } catch (error) {
-    logger.error(`Failed: ${description}`, error as Error, { command });
-    logger.error(`❌ ${description} failed:`, (error as Error).message);
+    circuitLogger.error(`Failed: ${description}`, error as Error, { command });
+    circuitLogger.error(`❌ ${description} failed:`, (error as Error).message);
     process.exit(1);
   }
 }
 
 function main(): void {
-  const logger = new CircuitLogger('circuit-setup');
+  const circuitLogger = new CircuitLogger('circuit-setup');
   const startTime = Date.now();
 
-  logger.setupStart('trusted-setup');
-  logger.info('🔧 Setting up ZK-SNARK circuit...');
+  circuitLogger.setupStart('trusted-setup');
+  circuitLogger.info('🔧 Setting up ZK-SNARK circuit...');
 
   try {
     // Ensure directories exist
     ensureDirectoryExists(BUILD_DIR);
     ensureDirectoryExists(SETUP_DIR);
-    logger.debug('Setup directories ensured', { BUILD_DIR, SETUP_DIR });
+    circuitLogger.debug('Setup directories ensured', { BUILD_DIR, SETUP_DIR });
 
     // Check if circuit files exist
     const r1csPath = join(BUILD_DIR, `${CIRCUIT_NAME}.r1cs`);
     if (!existsSync(r1csPath)) {
-      logger.info('Circuit not compiled. Compiling first...');
-      logger.warn('⚠️  Circuit not compiled. Compiling first...');
+      circuitLogger.info('Circuit not compiled. Compiling first...');
+      circuitLogger.warn('⚠️  Circuit not compiled. Compiling first...');
       // Try several likely locations for the circom source (handles dist vs source layouts)
       // Prefer the project's source circuit file in the repo `src/` directory
       // This avoids compiling the dist-bundled copy which may have been transformed
@@ -97,7 +97,7 @@ function main(): void {
       }
 
       if (!srcPath) {
-        logger.error(
+        circuitLogger.error(
           'Could not find circuit source file in any expected location',
           {
             candidates: candidateSources,
@@ -130,7 +130,7 @@ function main(): void {
         try {
           if (existsSync(cand)) {
             circomCmd = cand;
-            logger.info(`Using local circom binary: ${cand}`);
+            circuitLogger.info(`Using local circom binary: ${cand}`);
             break;
           }
         } catch {
@@ -141,7 +141,7 @@ function main(): void {
       runCommand(
         `${circomCmd} ${srcPath} -l ${includeLocal} -l ${includeCircomlib} --r1cs --wasm --sym --c -o ${BUILD_DIR}/`,
         'Circuit compilation',
-        logger
+        circuitLogger
       );
     }
 
@@ -172,8 +172,10 @@ function main(): void {
       (fileExistsAndNonEmpty(distProofZkey) &&
         fileExistsAndNonEmpty(distVerificationKey))
     ) {
-      logger.info('Found existing setup artifacts — skipping trusted setup');
-      logger.info(
+      circuitLogger.info(
+        'Found existing setup artifacts — skipping trusted setup'
+      );
+      circuitLogger.info(
         'Setup artifacts already exist. Skipping heavy snarkjs steps.'
       );
 
@@ -190,17 +192,17 @@ function main(): void {
             // created by tests or from earlier runs.
             try {
               if (statSync(srcF).size === 0) {
-                logger.warn(`Skipping zero-byte artifact: ${srcF}`);
+                circuitLogger.warn(`Skipping zero-byte artifact: ${srcF}`);
                 continue;
               }
             } catch {
               // If stat fails, fall back to copying and let it be handled by caller
             }
             copyFileSync(srcF, dstF);
-            logger.info(`Mirrored ${srcF} -> ${dstF}`);
+            circuitLogger.info(`Mirrored ${srcF} -> ${dstF}`);
           } catch (e) {
             // non-fatal
-            logger.warn(
+            circuitLogger.warn(
               `Failed to mirror ${srcF} to ${dstF}: ${(e as Error).message}`
             );
           }
@@ -225,7 +227,7 @@ function main(): void {
                 try {
                   copyFileSync(srcPath, dstPath);
                 } catch (e) {
-                  logger.warn(
+                  circuitLogger.warn(
                     `Failed to copy ${srcPath} -> ${dstPath}: ${
                       (e as Error).message
                     }`
@@ -237,9 +239,9 @@ function main(): void {
 
           try {
             copyDirRecursive(BUILD_DIR, distBuildPath);
-            logger.info(`Mirrored build/ -> ${distBuildPath}`);
+            circuitLogger.info(`Mirrored build/ -> ${distBuildPath}`);
           } catch (e) {
-            logger.warn(
+            circuitLogger.warn(
               `Failed to mirror build to dist: ${(e as Error).message}`
             );
           }
@@ -250,13 +252,13 @@ function main(): void {
         const artifactsDir = join(process.cwd(), 'artifacts');
         if (!existsSync(artifactsDir)) {
           ensureDirectoryExists(artifactsDir);
-          logger.info(`Created artifacts directory: ${artifactsDir}`);
+          circuitLogger.info(`Created artifacts directory: ${artifactsDir}`);
         }
       } catch {
         // ignore mirroring errors
       }
 
-      logger.setupComplete('trusted-setup', 0);
+      circuitLogger.setupComplete('trusted-setup', 0);
       return;
     }
 
@@ -280,15 +282,15 @@ function main(): void {
           distFinalPtau,
           join(SETUP_DIR, `pot${PTAU_POWER}_final.ptau`)
         );
-        logger.info('Using prebuilt Powers of Tau final from dist', {
+        circuitLogger.info('Using prebuilt Powers of Tau final from dist', {
           distFinalPtau,
         });
-        logger.info(
+        circuitLogger.info(
           `Using prebuilt ${distFinalPtau} — skipping powersoftau steps`
         );
       } catch (e) {
         // If copy fails, fall back to generating locally
-        logger.warn(
+        circuitLogger.warn(
           'Failed to copy prebuilt pot file from dist; will generate locally',
           (e as Error).message
         );
@@ -299,38 +301,38 @@ function main(): void {
       runCommand(
         `snarkjs powersoftau new bn128 ${PTAU_POWER} ${SETUP_DIR}/pot${PTAU_POWER}_0000.ptau -v`,
         'Powers of Tau phase 1',
-        logger
+        circuitLogger
       );
 
       runCommand(
         `snarkjs powersoftau contribute ${SETUP_DIR}/pot${PTAU_POWER}_0000.ptau ${SETUP_DIR}/pot${PTAU_POWER}_0001.ptau --name="First contribution" -v`,
         'Powers of Tau contribution',
-        logger
+        circuitLogger
       );
 
       runCommand(
         `snarkjs powersoftau prepare phase2 ${SETUP_DIR}/pot${PTAU_POWER}_0001.ptau ${SETUP_DIR}/pot${PTAU_POWER}_final.ptau -v`,
         'Powers of Tau phase 2 preparation',
-        logger
+        circuitLogger
       );
     }
 
     runCommand(
       `snarkjs groth16 setup ${BUILD_DIR}/${CIRCUIT_NAME}.r1cs ${SETUP_DIR}/pot${PTAU_POWER}_final.ptau ${SETUP_DIR}/${CIRCUIT_NAME}_0000.zkey`,
       'Groth16 setup',
-      logger
+      circuitLogger
     );
 
     runCommand(
       `snarkjs zkey contribute ${SETUP_DIR}/${CIRCUIT_NAME}_0000.zkey ${SETUP_DIR}/${CIRCUIT_NAME}_0001.zkey --name="First contribution" -v`,
       'ZKey contribution',
-      logger
+      circuitLogger
     );
 
     runCommand(
       `snarkjs zkey export verificationkey ${SETUP_DIR}/${CIRCUIT_NAME}_0001.zkey ${SETUP_DIR}/verification_key.json`,
       'Verification key export',
-      logger
+      circuitLogger
     );
 
     // Mirror generated setup artifacts into dist so downstream compiled scripts
@@ -345,10 +347,10 @@ function main(): void {
           const dstF = join(distSetupPath, f);
           try {
             copyFileSync(srcF, dstF);
-            logger.info(`Mirrored ${srcF} -> ${dstF}`);
+            circuitLogger.info(`Mirrored ${srcF} -> ${dstF}`);
           } catch (e) {
             // non-fatal
-            logger.warn(
+            circuitLogger.warn(
               `Failed to mirror ${srcF} to ${dstF}: ${(e as Error).message}`
             );
           }
@@ -361,28 +363,32 @@ function main(): void {
     const endTime = Date.now();
     const duration = endTime - startTime;
 
-    logger.setupComplete('trusted-setup', duration);
-    logger.performance('circuit-setup', duration, {
+    circuitLogger.setupComplete('trusted-setup', duration);
+    circuitLogger.performance('circuit-setup', duration, {
       circuitName: CIRCUIT_NAME,
       setupType: 'trusted-setup',
     });
 
-    logger.info('\n🎉 Setup completed successfully!');
-    logger.info('\nGenerated files:');
-    logger.info(`- Proving key: ${SETUP_DIR}/${CIRCUIT_NAME}_0001.zkey`);
-    logger.info(`- Verification key: ${SETUP_DIR}/verification_key.json`);
-    logger.info(`- Powers of Tau: ${SETUP_DIR}/pot${PTAU_POWER}_final.ptau`);
+    circuitLogger.info('\n🎉 Setup completed successfully!');
+    circuitLogger.info('\nGenerated files:');
+    circuitLogger.info(`- Proving key: ${SETUP_DIR}/${CIRCUIT_NAME}_0001.zkey`);
+    circuitLogger.info(
+      `- Verification key: ${SETUP_DIR}/verification_key.json`
+    );
+    circuitLogger.info(
+      `- Powers of Tau: ${SETUP_DIR}/pot${PTAU_POWER}_final.ptau`
+    );
   } catch (error) {
     const endTime = Date.now();
     const duration = endTime - startTime;
 
-    logger.setupError(error as Error, 'trusted-setup');
-    logger.performance('circuit-setup-failed', duration, {
+    circuitLogger.setupError(error as Error, 'trusted-setup');
+    circuitLogger.performance('circuit-setup-failed', duration, {
       circuitName: CIRCUIT_NAME,
       error: (error as Error).message,
     });
 
-    logger.error('❌ Setup failed:', (error as Error).message);
+    circuitLogger.error('❌ Setup failed:', (error as Error).message);
     process.exit(1);
   }
 }

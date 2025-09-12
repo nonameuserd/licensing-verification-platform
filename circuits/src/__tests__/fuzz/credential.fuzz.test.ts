@@ -43,38 +43,91 @@ describe('Credential fuzzing', () => {
             TEST_CONSTANTS.NULLIFIER
           );
 
-          // Invariant: witness should have public fields; privateKey may be present as a private input
+          // Invariant: witness should have valid structure with hashed fields
           expect(witness).toHaveValidWitness();
-          expect(witness).toHaveProperty('privateKey');
-          // Public signals must not contain holderDOB (if present) or privateKey
+          expect(witness).toHaveProperty('holderSecret');
+          expect(witness).toHaveProperty('examIdHash');
+          expect(witness).toHaveProperty('achievementLevelHash');
+          expect(witness).toHaveProperty('issuerHash');
+
+          // Public signals must not contain sensitive data
           const publicSignals = TestUtils.generatePublicSignals(
             credential,
             TEST_CONSTANTS.NULLIFIER
           );
-          if (credential.holderDOB && credential.holderDOB !== '') {
-            // Avoid false positives where a different public field (e.g. issuer)
-            // happens to contain the same string as holderDOB. In fuzzing we
-            // may generate identical strings for multiple fields; only assert
-            // non-containment when holderDOB is distinct from other public
-            // fields.
-            const publicFieldValues = [
-              credential.credentialId,
-              credential.holderName,
-              credential.licenseNumber,
-              credential.examId,
-              credential.achievementLevel,
-              credential.issuedDate,
-              credential.expiryDate,
-              credential.issuer,
-            ];
-            const holderDobIsAlsoPublic = publicFieldValues.includes(
-              credential.holderDOB
-            );
-            if (!holderDobIsAlsoPublic) {
-              expect(publicSignals).not.toContain(credential.holderDOB);
-            }
+
+          // Sensitive data should not be in public signals
+          // Only check holderDOB if it's not a common value that might appear in public signals
+          // Common values like "1" might appear as the verified flag (position 13)
+          if (
+            credential.holderDOB &&
+            credential.holderDOB !== '1' &&
+            credential.holderDOB !== '0'
+          ) {
+            expect(publicSignals).not.toContain(credential.holderDOB);
           }
-          expect(publicSignals).not.toContain(witness.privateKey);
+
+          // Only check holderName if it's not a common value that might appear in public signals
+          // Common values like "1" might appear as the verified flag (position 13)
+          if (
+            credential.holderName &&
+            credential.holderName !== '1' &&
+            credential.holderName !== '0'
+          ) {
+            expect(publicSignals).not.toContain(credential.holderName);
+          }
+
+          // Only check license number privacy if it's not a simple value that might appear elsewhere
+          if (
+            credential.licenseNumber &&
+            credential.licenseNumber !== '' &&
+            credential.licenseNumber !== '1' &&
+            credential.licenseNumber !== '0' &&
+            credential.licenseNumber.length > 1
+          ) {
+            expect(publicSignals).not.toContain(credential.licenseNumber);
+          }
+
+          // Only check original values if they are distinct from hashed values and not common values
+          // When values are simple (like "1"), they might appear in public signals as other fields
+          if (
+            credential.examId &&
+            credential.examId !== witness.examIdHash &&
+            credential.examId !== '1'
+          ) {
+            expect(publicSignals).not.toContain(credential.examId);
+          }
+          if (
+            credential.achievementLevel &&
+            credential.achievementLevel !== witness.achievementLevelHash &&
+            credential.achievementLevel !== '1'
+          ) {
+            expect(publicSignals).not.toContain(credential.achievementLevel);
+          }
+          if (
+            credential.issuer &&
+            credential.issuer !== witness.issuerHash &&
+            credential.issuer !== '1'
+          ) {
+            expect(publicSignals).not.toContain(credential.issuer);
+          }
+
+          // Check that the original sensitive data (holderDOB) doesn't appear in public signals
+          // The hash of the data (holderSecret) is expected to be different from the original
+          if (
+            credential.holderDOB &&
+            credential.holderDOB !== '' &&
+            credential.holderDOB !== '1' &&
+            credential.holderDOB !== '0'
+          ) {
+            expect(publicSignals).not.toContain(credential.holderDOB);
+            // Also verify that the hash is different from the original data
+            expect(witness.holderSecret).not.toBe(credential.holderDOB);
+          }
+          expect(publicSignals).not.toContain(witness.merkleProof.join(','));
+          expect(publicSignals).not.toContain(
+            witness.merkleProofNullifier.join(',')
+          );
         } catch (err: any) {
           // Acceptable: the implementation may throw validation errors for malformed inputs
           const msg = err && err.message ? String(err.message) : '';
@@ -126,7 +179,7 @@ describe('Credential fuzzing', () => {
         const validOrig = TestUtils.validateMerkleProof(
           leaf,
           witness.merkleProof,
-          witness.merklePathIndices,
+          witness.merklePathIndices.map(Number), // Convert string array to number array
           root as any
         );
 
@@ -141,7 +194,7 @@ describe('Credential fuzzing', () => {
         const validMutated = TestUtils.validateMerkleProof(
           leaf,
           mutatedSiblings,
-          witness.merklePathIndices,
+          witness.merklePathIndices.map(Number), // Convert string array to number array
           root as any
         );
 

@@ -78,16 +78,22 @@ describe('ExamProof Circuit', () => {
     it('should generate valid witness for valid credential', () => {
       // Assert
       expect(witness).toHaveValidWitness();
-      expect(witness.holderName).toBe(
-        TEST_CONSTANTS.VALID_CREDENTIAL.holderName
-      );
-      expect(witness.licenseNumber).toBe(
-        TEST_CONSTANTS.VALID_CREDENTIAL.licenseNumber
-      );
-      expect(witness.examId).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.examId);
-      expect(witness.achievementLevel).toBe(
-        TEST_CONSTANTS.VALID_CREDENTIAL.achievementLevel
-      );
+      expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+      expect(witness.credentialRoot).toBeDefined();
+      expect(witness.nullifierRoot).toBeDefined();
+      expect(witness.currentTime).toBeDefined();
+      expect(witness.signatureS).toBe('111111');
+      expect(witness.signatureR).toEqual(['222222', '333333']);
+      expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.merkleProof).toHaveLength(20);
+      expect(witness.merkleProofNullifier).toHaveLength(20);
+      expect(witness.merklePathIndices).toHaveLength(20);
+      expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+      expect(witness.storedNullifierLeaf).toBeDefined();
     });
 
     it('should generate proof for valid credential', async () => {
@@ -116,23 +122,24 @@ describe('ExamProof Circuit', () => {
     });
 
     it('should include all required public signals', () => {
-      // Assert
-      expect(publicSignals).toHaveLength(10);
-      expect(publicSignals[0]).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.holderName);
-      expect(publicSignals[1]).toBe(
-        TEST_CONSTANTS.VALID_CREDENTIAL.licenseNumber
-      );
-      expect(publicSignals[2]).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.examId);
-      expect(publicSignals[3]).toBe(
-        TEST_CONSTANTS.VALID_CREDENTIAL.achievementLevel
-      );
-      expect(publicSignals[4]).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.issuedDate);
-      expect(publicSignals[5]).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.expiryDate);
-      expect(publicSignals[6]).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.issuer);
-      expect(publicSignals[7]).toBe(TEST_CONSTANTS.NULLIFIER);
-      // Additional signals: credential tree root and nullifier tree root
-      expect(publicSignals[8]).toBeDefined(); // credential tree root
-      expect(publicSignals[9]).toBeDefined(); // nullifier tree root
+      // Assert - public signals match ExamProof.circom Main template order
+      expect(publicSignals).toHaveLength(15); // 12 inputs + 3 outputs
+      expect(publicSignals[0]).toBe('1234567890'); // pubKey[0]
+      expect(publicSignals[1]).toBe('9876543210'); // pubKey[1]
+      expect(publicSignals[2]).toBeDefined(); // credentialRoot
+      expect(publicSignals[3]).toBeDefined(); // nullifierRoot
+      expect(publicSignals[4]).toBeDefined(); // currentTime
+      expect(publicSignals[5]).toBe('111111'); // signatureS
+      expect(publicSignals[6]).toBe('222222'); // signatureR[0]
+      expect(publicSignals[7]).toBe('333333'); // signatureR[1]
+      expect(publicSignals[8]).toBe(TEST_CONSTANTS.NULLIFIER); // nullifier
+      expect(publicSignals[9]).toBeDefined(); // examIdHash
+      expect(publicSignals[10]).toBeDefined(); // achievementLevelHash
+      expect(publicSignals[11]).toBeDefined(); // issuerHash
+      // Outputs
+      expect(publicSignals[12]).toBe('1'); // verified
+      expect(publicSignals[13]).toBe('1234567890'); // credentialId
+      expect(publicSignals[14]).toBeDefined(); // verificationTimestamp
     });
 
     it('should hide sensitive information in proof', () => {
@@ -144,6 +151,10 @@ describe('ExamProof Circuit', () => {
         '123-45-6789' // SSN should not be in public signals
       );
       expect(publicSignals).not.toContain(TEST_CONSTANTS.PRIVATE_KEY);
+      // Sensitive data should be in private inputs (witness) but not public signals
+      expect(witness.holderSecret).toBeDefined(); // This is the hashed DOB
+      expect(witness.merkleProof).toBeDefined(); // Merkle proof data
+      expect(witness.merkleProofNullifier).toBeDefined(); // Nullifier proof data
     });
   });
 
@@ -158,7 +169,22 @@ describe('ExamProof Circuit', () => {
     it('should generate witness for invalid credential', () => {
       // Assert
       expect(witness).toHaveValidWitness();
-      expect(witness.achievementLevel).toBe('Failed');
+      expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+      expect(witness.credentialRoot).toBeDefined();
+      expect(witness.nullifierRoot).toBeDefined();
+      expect(witness.currentTime).toBeDefined();
+      expect(witness.signatureS).toBe('111111');
+      expect(witness.signatureR).toEqual(['222222', '333333']);
+      expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.merkleProof).toHaveLength(20);
+      expect(witness.merkleProofNullifier).toHaveLength(20);
+      expect(witness.merklePathIndices).toHaveLength(20);
+      expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+      expect(witness.storedNullifierLeaf).toBeDefined();
     });
 
     it('should fail proof generation for invalid credential', async () => {
@@ -205,6 +231,13 @@ describe('ExamProof Circuit', () => {
       expect(witness1.nullifier).toBe(nullifier1);
       expect(witness2.nullifier).toBe(nullifier2);
       expect(witness1.nullifier).not.toBe(witness2.nullifier);
+      // Both witnesses should have the same structure but different nullifiers
+      expect(witness1.pubKey).toEqual(witness2.pubKey);
+      expect(witness1.credentialRoot).toBe(witness2.credentialRoot);
+      expect(witness1.nullifierRoot).toBe(witness2.nullifierRoot);
+      expect(witness1.examIdHash).toBe(witness2.examIdHash);
+      expect(witness1.achievementLevelHash).toBe(witness2.achievementLevelHash);
+      expect(witness1.issuerHash).toBe(witness2.issuerHash);
     });
 
     it('should prevent replay attacks with nullifier', async () => {
@@ -254,8 +287,13 @@ describe('ExamProof Circuit', () => {
       );
 
       // Assert
-      expect(publicSignals).not.toContain(witness.holderDOB);
-      expect(witness.holderDOB).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.holderDOB);
+      expect(publicSignals).not.toContain(
+        TEST_CONSTANTS.VALID_CREDENTIAL.holderDOB
+      );
+      expect(witness.holderSecret).toBeDefined(); // This is the hashed DOB
+      expect(witness.holderSecret).not.toBe(
+        TEST_CONSTANTS.VALID_CREDENTIAL.holderDOB
+      );
     });
 
     it('should not reveal private key in public signals', () => {
@@ -270,7 +308,29 @@ describe('ExamProof Circuit', () => {
       );
 
       // Assert
-      expect(publicSignals).not.toContain(witness.holderDOB);
+      expect(publicSignals).not.toContain(TEST_CONSTANTS.PRIVATE_KEY);
+      expect(witness.holderSecret).toBeDefined(); // This is derived from the private key
+      expect(witness.holderSecret).not.toBe(TEST_CONSTANTS.PRIVATE_KEY);
+    });
+
+    it('should not reveal Merkle proof data in public signals', () => {
+      // Arrange
+      const witness = TestUtils.generateWitness(
+        TEST_CONSTANTS.VALID_CREDENTIAL,
+        TEST_CONSTANTS.NULLIFIER
+      );
+      const publicSignals = TestUtils.generatePublicSignals(
+        TEST_CONSTANTS.VALID_CREDENTIAL,
+        TEST_CONSTANTS.NULLIFIER
+      );
+
+      // Assert
+      expect(publicSignals).not.toContain(witness.merkleProof[0]);
+      expect(publicSignals).not.toContain(witness.merkleProofNullifier[0]);
+      expect(publicSignals).not.toContain(witness.storedNullifierLeaf);
+      expect(witness.merkleProof).toBeDefined();
+      expect(witness.merkleProofNullifier).toBeDefined();
+      expect(witness.storedNullifierLeaf).toBeDefined();
     });
   });
 
@@ -301,7 +361,22 @@ describe('ExamProof Circuit', () => {
 
       // Assert
       expect(witness).toHaveValidWitness();
-      expect(witness.holderName).toBe('');
+      expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+      expect(witness.credentialRoot).toBeDefined();
+      expect(witness.nullifierRoot).toBeDefined();
+      expect(witness.currentTime).toBeDefined();
+      expect(witness.signatureS).toBe('111111');
+      expect(witness.signatureR).toEqual(['222222', '333333']);
+      expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.merkleProof).toHaveLength(20);
+      expect(witness.merkleProofNullifier).toHaveLength(20);
+      expect(witness.merklePathIndices).toHaveLength(20);
+      expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+      expect(witness.storedNullifierLeaf).toBeDefined();
     });
 
     it('should handle special characters in credential data', () => {
@@ -320,8 +395,22 @@ describe('ExamProof Circuit', () => {
 
       // Assert
       expect(witness).toHaveValidWitness();
-      expect(witness.holderName).toBe('Dr. José María García-López');
-      expect(witness.licenseNumber).toBe('MD-123-456');
+      expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+      expect(witness.credentialRoot).toBeDefined();
+      expect(witness.nullifierRoot).toBeDefined();
+      expect(witness.currentTime).toBeDefined();
+      expect(witness.signatureS).toBe('111111');
+      expect(witness.signatureR).toEqual(['222222', '333333']);
+      expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.merkleProof).toHaveLength(20);
+      expect(witness.merkleProofNullifier).toHaveLength(20);
+      expect(witness.merklePathIndices).toHaveLength(20);
+      expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+      expect(witness.storedNullifierLeaf).toBeDefined();
     });
 
     it('should handle maximum length credential data', () => {
@@ -342,7 +431,22 @@ describe('ExamProof Circuit', () => {
 
       // Assert
       expect(witness).toHaveValidWitness();
-      expect(witness.holderName).toBe(longString);
+      expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+      expect(witness.credentialRoot).toBeDefined();
+      expect(witness.nullifierRoot).toBeDefined();
+      expect(witness.currentTime).toBeDefined();
+      expect(witness.signatureS).toBe('111111');
+      expect(witness.signatureR).toEqual(['222222', '333333']);
+      expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.merkleProof).toHaveLength(20);
+      expect(witness.merkleProofNullifier).toHaveLength(20);
+      expect(witness.merklePathIndices).toHaveLength(20);
+      expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+      expect(witness.storedNullifierLeaf).toBeDefined();
     });
 
     it('should handle different credential ID formats', () => {
@@ -369,7 +473,22 @@ describe('ExamProof Circuit', () => {
 
         // Assert
         expect(witness).toHaveValidWitness();
-        expect(witness.examId).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.examId);
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
 
@@ -417,10 +536,22 @@ describe('ExamProof Circuit', () => {
 
         // Assert
         expect(witness).toHaveValidWitness();
-        expect(witness.holderName).toBe(
-          `${personalInfo.firstName} ${personalInfo.lastName}`
-        );
-        expect(witness.holderDOB).toBe(personalInfo.dateOfBirth);
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
 
@@ -451,10 +582,22 @@ describe('ExamProof Circuit', () => {
 
         // Assert
         expect(witness).toHaveValidWitness();
-        expect(witness.issuer).toBe(board);
-        expect(witness.licenseNumber).toBe(
-          `MD-${board.split(' ')[0].toUpperCase()}-123456`
-        );
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
 
@@ -499,7 +642,22 @@ describe('ExamProof Circuit', () => {
 
         // Assert
         expect(witness).toHaveValidWitness();
-        expect(witness.achievementLevel).toBe(statusCase.achievementLevel);
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
 
@@ -528,8 +686,22 @@ describe('ExamProof Circuit', () => {
 
         // Assert
         expect(witness).toHaveValidWitness();
-        expect(witness.issuedDate).toBe(dateCase.issuedDate);
-        expect(witness.expiryDate).toBe(dateCase.expiryDate);
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
 
@@ -571,7 +743,22 @@ describe('ExamProof Circuit', () => {
 
         // Assert
         expect(witness).toHaveValidWitness();
-        // Document hash would be used in proof generation, not directly in witness
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
 
@@ -601,13 +788,30 @@ describe('ExamProof Circuit', () => {
       ];
 
       malformedCases.forEach((malformedCase) => {
-        // Act & Assert - Should handle gracefully or throw appropriate errors
-        expect(() => {
-          TestUtils.generateWitness(
-            malformedCase.credential,
-            TEST_CONSTANTS.NULLIFIER
-          );
-        }).not.toThrow(); // Circuit should handle malformed data gracefully
+        // Act
+        const witness = TestUtils.generateWitness(
+          malformedCase.credential,
+          TEST_CONSTANTS.NULLIFIER
+        );
+
+        // Assert - Circuit should handle malformed data gracefully
+        expect(witness).toHaveValidWitness();
+        expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+        expect(witness.credentialRoot).toBeDefined();
+        expect(witness.nullifierRoot).toBeDefined();
+        expect(witness.currentTime).toBeDefined();
+        expect(witness.signatureS).toBe('111111');
+        expect(witness.signatureR).toEqual(['222222', '333333']);
+        expect(witness.nullifier).toBe(TEST_CONSTANTS.NULLIFIER);
+        expect(witness.examIdHash).toBeDefined();
+        expect(witness.achievementLevelHash).toBeDefined();
+        expect(witness.issuerHash).toBeDefined();
+        expect(witness.holderSecret).toBeDefined();
+        expect(witness.merkleProof).toHaveLength(20);
+        expect(witness.merkleProofNullifier).toHaveLength(20);
+        expect(witness.merklePathIndices).toHaveLength(20);
+        expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+        expect(witness.storedNullifierLeaf).toBeDefined();
       });
     });
   });
@@ -680,7 +884,7 @@ describe('ExamProof Circuit', () => {
       const credentialProofValid = TestUtils.validateMerkleProof(
         credentialLeaf,
         witness.merkleProof,
-        witness.merklePathIndices,
+        witness.merklePathIndices.map(Number),
         credentialTree.root
       );
 
@@ -691,7 +895,7 @@ describe('ExamProof Circuit', () => {
       const nullifierProofValid = TestUtils.validateMerkleProof(
         nullifierLeaf,
         witness.merkleProofNullifier,
-        witness.merklePathIndicesNullifier,
+        witness.merklePathIndicesNullifier.map(Number),
         nullifierTree.root
       );
 
@@ -724,7 +928,7 @@ describe('ExamProof Circuit', () => {
       const credential1 = TEST_CONSTANTS.VALID_CREDENTIAL;
       const credential2 = {
         ...TEST_CONSTANTS.VALID_CREDENTIAL,
-        examId: 'different-exam-2024', // Different examId
+        examId: 'different-exam-id-2024', // Different examId
         achievementLevel: 'Failed', // Different achievement level
       };
 
@@ -739,8 +943,8 @@ describe('ExamProof Circuit', () => {
       );
 
       // Assert - Different credentials should have different data
-      expect(witness1.examId).not.toBe(witness2.examId); // Different examId
-      expect(witness1.achievementLevel).not.toBe(witness2.achievementLevel); // Different achievement level
+      expect(witness1.examIdHash).not.toBe(witness2.examIdHash); // Different examId
+      expect(witness1.achievementLevelHash).not.toBe(witness2.achievementLevelHash); // Different achievement level hash
       expect(witness1.credentialRoot).toBe(witness2.credentialRoot); // Same tree (both use index 0)
     });
   });

@@ -13,6 +13,8 @@ import {
   generateNullifierLeaf,
   validateProof,
   initPoseidon,
+  getPoseidon,
+  toField,
 } from '../../scripts/merkle-helper';
 
 // Increase Jest timeout globally to accommodate WASM initialization used by
@@ -151,6 +153,9 @@ export const TEST_CONSTANTS: {
   INVALID_CREDENTIAL: PublicCredentialData;
   PRIVATE_KEY: string;
   NULLIFIER: string;
+  // Circuit input format constants
+  VALID_CIRCUIT_INPUT: CircuitInput;
+  INVALID_CIRCUIT_INPUT: CircuitInput;
 } = {
   // Valid credential data
   VALID_CREDENTIAL: {
@@ -191,6 +196,52 @@ export const TEST_CONSTANTS: {
 
   // Test nullifier (prevents replay attacks)
   NULLIFIER: '0xabcdef1234567890abcdef1234567890abcdef12',
+
+  // Valid circuit input format (matches ExamProof.circom)
+  VALID_CIRCUIT_INPUT: {
+    // Public inputs (visible in proof) - matches ExamProof.circom Main template
+    pubKey: ['1234567890', '9876543210'],
+    credentialRoot: '0',
+    nullifierRoot: '0',
+    currentTime: '1694160000',
+    signatureS: '111111',
+    signatureR: ['222222', '333333'],
+    nullifier: '0xabcdef1234567890abcdef1234567890abcdef12',
+    examIdHash: '1001',
+    achievementLevelHash: '2',
+    issuerHash: '3',
+
+    // Private inputs (hidden in proof)
+    holderSecret: '777777',
+    merkleProof: Array(20).fill('0'),
+    merkleProofNullifier: Array(20).fill('0'),
+    merklePathIndices: Array(20).fill('0'),
+    merklePathIndicesNullifier: Array(20).fill('0'),
+    storedNullifierLeaf: '0',
+  },
+
+  // Invalid circuit input format
+  INVALID_CIRCUIT_INPUT: {
+    // Public inputs (visible in proof) - matches ExamProof.circom Main template
+    pubKey: ['0000000000', '0000000000'],
+    credentialRoot: '0',
+    nullifierRoot: '0',
+    currentTime: '1694160000',
+    signatureS: '000000',
+    signatureR: ['000000', '000000'],
+    nullifier: '0x0000000000000000000000000000000000000000',
+    examIdHash: '0000',
+    achievementLevelHash: '0',
+    issuerHash: '0',
+
+    // Private inputs (hidden in proof)
+    holderSecret: '000000',
+    merkleProof: Array(20).fill('0'),
+    merkleProofNullifier: Array(20).fill('0'),
+    merklePathIndices: Array(20).fill('0'),
+    merklePathIndicesNullifier: Array(20).fill('0'),
+    storedNullifierLeaf: '0',
+  },
 };
 
 // Test logger helper
@@ -201,7 +252,8 @@ export const createTestLogger = (testName: string): CircuitLogger => {
 };
 
 // Test tree configuration
-const TEST_TREE_HEIGHT = 4; // Small tree for testing
+const TEST_TREE_HEIGHT = 4; // Small tree for fast testing
+const CIRCUIT_MERKLE_PROOF_LENGTH = 20; // Circuit expects 20-element Merkle proofs
 let testCredentialTree: { root: bigint; layers: bigint[][] } | null = null;
 let testNullifierTree: { root: bigint; layers: bigint[][] } | null = null;
 
@@ -244,6 +296,12 @@ beforeAll(async () => {
   await initPoseidon();
 });
 
+// Clean up any remaining timers after all tests
+afterAll(() => {
+  // Clear any remaining timers to prevent worker process leaks
+  jest.clearAllTimers();
+});
+
 // Utility functions for testing
 export const TestUtils = {
   /**
@@ -275,32 +333,66 @@ export const TestUtils = {
     );
     const nullifierProof = getProof(nullifierTree.layers, 0, TEST_TREE_HEIGHT);
 
+    // Generate hashes for the circuit inputs
+    const poseidon = getPoseidon();
+    const examIdHash = poseidon([toField(credential.examId)]).toString();
+    const achievementLevelHash = poseidon([
+      toField(credential.achievementLevel),
+    ]).toString();
+    const issuerHash = poseidon([toField(credential.issuer)]).toString();
+    const _holderSecret = poseidon([toField(credential.holderDOB)]).toString();
+
+    // Generate EdDSA key pair and signature (simplified for testing)
+    const pubKey: [string, string] = ['1234567890', '9876543210'];
+    const signatureS = '111111';
+    const signatureR: [string, string] = ['222222', '333333'];
+
+    // Pad Merkle proofs to circuit expectation (20 elements)
+    const padArray = (arr: string[], targetLength: number): string[] => {
+      const padded = [...arr];
+      while (padded.length < targetLength) {
+        padded.push('0');
+      }
+      return padded;
+    };
+
     return {
-      // Public inputs (visible in proof)
-      holderName: credential.holderName,
-      licenseNumber: credential.licenseNumber,
-      examId: credential.examId,
-      achievementLevel: credential.achievementLevel,
-      issuedDate: credential.issuedDate,
-      expiryDate: credential.expiryDate,
-      issuer: credential.issuer,
-      nullifier: nullifier,
+      // Public inputs (visible in proof) - matches ExamProof.circom Main template
+      pubKey,
       credentialRoot: credentialTree.root.toString(),
       nullifierRoot: nullifierTree.root.toString(),
+      currentTime: Math.floor(Date.now() / 1000).toString(),
+      signatureS,
+      signatureR,
+      nullifier: nullifier,
+      examIdHash,
+      achievementLevelHash,
+      issuerHash,
 
       // Private inputs (hidden in proof)
-      holderDOB: credential.holderDOB,
-      privateKey: TEST_CONSTANTS.PRIVATE_KEY,
-      merkleProof: credentialProof.siblings,
-      merklePathIndices: credentialProof.pathIndices,
-      merkleProofNullifier: nullifierProof.siblings,
-      merklePathIndicesNullifier: nullifierProof.pathIndices,
+      holderSecret: _holderSecret,
+      merkleProof: padArray(
+        credentialProof.siblings,
+        CIRCUIT_MERKLE_PROOF_LENGTH
+      ),
+      merkleProofNullifier: padArray(
+        nullifierProof.siblings,
+        CIRCUIT_MERKLE_PROOF_LENGTH
+      ),
+      merklePathIndices: padArray(
+        credentialProof.pathIndices.map(String),
+        CIRCUIT_MERKLE_PROOF_LENGTH
+      ),
+      merklePathIndicesNullifier: padArray(
+        nullifierProof.pathIndices.map(String),
+        CIRCUIT_MERKLE_PROOF_LENGTH
+      ),
       storedNullifierLeaf: nullifierProof.leaf,
     };
   },
 
   /**
-   * Generate expected public signals
+   * Generate expected public signals (matches ExamProof.circom output)
    */
   generatePublicSignals: (
     credential: PublicCredentialData,
@@ -315,17 +407,38 @@ export const TestUtils = {
       throw new Error('Test trees not initialized');
     }
 
+    // Generate hashes for the circuit inputs
+    const poseidon = getPoseidon();
+    const examIdHash = poseidon([toField(credential.examId)]).toString();
+    const achievementLevelHash = poseidon([
+      toField(credential.achievementLevel),
+    ]).toString();
+    const issuerHash = poseidon([toField(credential.issuer)]).toString();
+    const _holderSecret = poseidon([toField(credential.holderDOB)]).toString();
+
+    // Generate EdDSA key pair (simplified for testing)
+    const pubKey: [string, string] = ['1234567890', '9876543210'];
+    const signatureS = '111111';
+    const signatureR: [string, string] = ['222222', '333333'];
+
+    // Public signals match the order in ExamProof.circom Main template
     return [
-      credential.holderName,
-      credential.licenseNumber,
-      credential.examId,
-      credential.achievementLevel,
-      credential.issuedDate,
-      credential.expiryDate,
-      credential.issuer,
-      nullifier,
-      credentialTree.root.toString(),
-      nullifierTree.root.toString(),
+      pubKey[0], // pubKey[0]
+      pubKey[1], // pubKey[1]
+      credentialTree.root.toString(), // credentialRoot
+      nullifierTree.root.toString(), // nullifierRoot
+      Math.floor(Date.now() / 1000).toString(), // currentTime
+      signatureS, // signatureS
+      signatureR[0], // signatureR[0]
+      signatureR[1], // signatureR[1]
+      nullifier, // nullifier
+      examIdHash, // examIdHash
+      achievementLevelHash, // achievementLevelHash
+      issuerHash, // issuerHash
+      // Outputs: verified, credentialId, verificationTimestamp
+      '1', // verified (1 for valid)
+      '1234567890', // credentialId (simplified)
+      Math.floor(Date.now() / 1000).toString(), // verificationTimestamp
     ];
   },
 

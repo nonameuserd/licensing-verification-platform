@@ -24,7 +24,6 @@ describe('ExamProof Circuit Security Tests', () => {
         credential,
         TEST_CONSTANTS.NULLIFIER
       );
-      void witness;
       const publicSignals = TestUtils.generatePublicSignals(
         credential,
         TEST_CONSTANTS.NULLIFIER
@@ -40,22 +39,25 @@ describe('ExamProof Circuit Security Tests', () => {
         credential.holderDOB,
         '123-45-6789', // SSN should not be in public signals
         TEST_CONSTANTS.PRIVATE_KEY,
+        witness.holderSecret, // This should be private
+        witness.merkleProof.join(','), // Merkle proof should be private
+        witness.merkleProofNullifier.join(','), // Nullifier proof should be private
       ];
 
       sensitiveData.forEach((sensitive) => {
         expect(publicSignals).not.toContain(sensitive);
       });
 
-      // Public data should be present
-      expect(publicSignals).toContain(credential.holderName);
-      expect(publicSignals).toContain(credential.licenseNumber);
-      expect(publicSignals).toContain(credential.examId);
-      expect(publicSignals).toContain(credential.achievementLevel);
+      // Public signals should contain only the expected circuit outputs
+      expect(publicSignals).toHaveLength(15); // 12 public inputs + 3 outputs
+      expect(publicSignals[12]).toBe('1'); // verified output
+      expect(publicSignals[13]).toBeDefined(); // credentialId output
+      expect(publicSignals[14]).toBeDefined(); // verificationTimestamp output
 
       logger.security('privacy-check-completed', {
         credentialId: credential.credentialId,
         sensitiveDataChecked: sensitiveData.length,
-        publicDataVerified: 4,
+        publicSignalsCount: publicSignals.length,
         privacyPreserved: true,
       });
     });
@@ -69,27 +71,26 @@ describe('ExamProof Circuit Security Tests', () => {
       );
 
       // Act & Assert - Public signals should not allow full credential reconstruction
-      const reconstructedCredential = {
-        holderName: publicSignals[0],
-        licenseNumber: publicSignals[1],
-        examId: publicSignals[2],
-        achievementLevel: publicSignals[3],
-        issuedDate: publicSignals[4],
-        expiryDate: publicSignals[5],
-        issuer: publicSignals[6],
-        nullifier: publicSignals[7],
-      };
+      // Public signals contain: pubKey[0], pubKey[1], credentialRoot, nullifierRoot,
+      // currentTime, signatureS, signatureR[0], signatureR[1], nullifier,
+      // examIdHash, achievementLevelHash, issuerHash, verified, credentialId, verificationTimestamp
 
       // Should not have access to sensitive fields
-      expect(reconstructedCredential).not.toHaveProperty('holderDOB');
-      expect(reconstructedCredential).not.toHaveProperty('holderSSN');
-      expect(reconstructedCredential).not.toHaveProperty('privateKey');
+      expect(publicSignals).not.toContain(credential.holderDOB);
+      expect(publicSignals).not.toContain(credential.holderName);
+      expect(publicSignals).not.toContain(credential.licenseNumber);
+      expect(publicSignals).not.toContain(credential.examId);
+      expect(publicSignals).not.toContain(credential.achievementLevel);
+      expect(publicSignals).not.toContain(credential.issuer);
+      expect(publicSignals).not.toContain(TEST_CONSTANTS.PRIVATE_KEY);
 
-      // Should have access to public fields
-      expect(reconstructedCredential.holderName).toBe(credential.holderName);
-      expect(reconstructedCredential.licenseNumber).toBe(
-        credential.licenseNumber
-      );
+      // Should have access to hashed versions and circuit outputs
+      expect(publicSignals[9]).toBeDefined(); // examIdHash
+      expect(publicSignals[10]).toBeDefined(); // achievementLevelHash
+      expect(publicSignals[11]).toBeDefined(); // issuerHash
+      expect(publicSignals[12]).toBe('1'); // verified output
+      expect(publicSignals[13]).toBeDefined(); // credentialId output
+      expect(publicSignals[14]).toBeDefined(); // verificationTimestamp output
     });
 
     it('should maintain privacy across multiple verifications', () => {
@@ -738,7 +739,16 @@ describe('ExamProof Circuit Security Tests', () => {
       );
 
       // Act & Assert - Sensitive data should be hashed, not stored in plain text
-      expect(witness.holderDOB).toBe(TEST_CONSTANTS.VALID_CREDENTIAL.holderDOB);
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.holderSecret).not.toBe(credential.holderDOB); // Should be hashed
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.examIdHash).not.toBe(credential.examId); // Should be hashed
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.achievementLevelHash).not.toBe(
+        credential.achievementLevel
+      ); // Should be hashed
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.issuerHash).not.toBe(credential.issuer); // Should be hashed
     });
 
     it('should generate cryptographically secure nullifiers', () => {

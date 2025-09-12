@@ -17,6 +17,12 @@
 export * from './lib/circuit-utils';
 export * from './lib/proof-utils';
 
+// Export verification utilities
+export * from './lib/verification-utils';
+
+// Export network utilities
+export * from './lib/networks';
+
 // Export logger utilities
 export * from './lib/logger';
 

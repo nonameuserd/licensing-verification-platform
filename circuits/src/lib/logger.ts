@@ -329,7 +329,4 @@ export class CircuitLogger {
  */
 export const defaultCircuitLogger = new CircuitLogger('circuit-operations');
 
-/**
- * Export the main circuit logger for direct use
- */
-export { circuitLogger as logger };
+// Note: Removed backward compatibility alias 'logger' - use 'circuitLogger' directly

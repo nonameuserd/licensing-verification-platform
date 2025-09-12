@@ -44,6 +44,22 @@ describe('ExamProof Circuit Integration Tests', () => {
       // Act - Step 2: Generate witness
       const witness = TestUtils.generateWitness(credential, nullifier);
       expect(witness).toHaveValidWitness();
+      expect(witness.pubKey).toEqual(['1234567890', '9876543210']);
+      expect(witness.credentialRoot).toBeDefined();
+      expect(witness.nullifierRoot).toBeDefined();
+      expect(witness.currentTime).toBeDefined();
+      expect(witness.signatureS).toBe('111111');
+      expect(witness.signatureR).toEqual(['222222', '333333']);
+      expect(witness.nullifier).toBe(nullifier);
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
+      expect(witness.holderSecret).toBeDefined();
+      expect(witness.merkleProof).toHaveLength(20);
+      expect(witness.merkleProofNullifier).toHaveLength(20);
+      expect(witness.merklePathIndices).toHaveLength(20);
+      expect(witness.merklePathIndicesNullifier).toHaveLength(20);
+      expect(witness.storedNullifierLeaf).toBeDefined();
 
       // Act - Step 3: Generate proof
       logger.proofGenerationStart(credential.credentialId);
@@ -79,16 +95,25 @@ describe('ExamProof Circuit Integration Tests', () => {
       const compilationResult = await TestUtils.mockCompile();
       expect(compilationResult).toBeDefined();
 
-      // Act - Step 2: Generate witness
+      // Act - Step 2: Generate witness (this will succeed as it just processes the data)
       const witness = TestUtils.generateWitness(credential, nullifier);
       expect(witness).toHaveValidWitness();
+      // For invalid credentials, the witness should contain the hashed values
+      expect(witness.achievementLevelHash).toBeDefined();
+      expect(witness.examIdHash).toBeDefined();
+      expect(witness.issuerHash).toBeDefined();
 
-      // Act - Step 3: Attempt proof generation (should fail)
+      // Act - Step 3: Attempt proof generation (should fail due to invalid credential)
       const mockGenerateProofInvalid = async () => {
-        throw new Error('Invalid credential');
+        // Simulate circuit validation failure for invalid credentials
+        if (credential.achievementLevel === 'Failed') {
+          throw new Error('Invalid credential: Failed achievement level');
+        }
+        return TestUtils.mockGenerateProof();
       };
+
       await expect(mockGenerateProofInvalid()).rejects.toThrow(
-        'Invalid credential'
+        'Invalid credential: Failed achievement level'
       );
     });
   });

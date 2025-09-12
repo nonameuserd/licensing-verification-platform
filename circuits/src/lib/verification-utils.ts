@@ -21,13 +21,6 @@ export interface Credential {
   updatedAt: string;
 }
 
-export interface VerificationResult {
-  verified: boolean;
-  credential?: Credential;
-  error?: string;
-  timestamp: string;
-}
-
 /**
  * Validate credential data
  */
@@ -98,8 +91,42 @@ export function validateCredential(credential: Credential): {
  * Check if a date string is valid
  */
 function isValidDate(dateString: string): boolean {
-  const date = new Date(dateString);
-  return date instanceof Date && !isNaN(date.getTime());
+  // Check for YYYY-MM-DD format
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateString)) {
+    return false;
+  }
+
+  // Parse the date components
+  const parts = dateString.split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+
+  // Check if the parsed values are valid
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    return false;
+  }
+
+  // Check month range
+  if (month < 1 || month > 12) {
+    return false;
+  }
+
+  // Check day range
+  if (day < 1 || day > 31) {
+    return false;
+  }
+
+  // Create a date object and check if it's valid
+  const date = new Date(year, month - 1, day);
+
+  // Check if the date is valid and matches the input
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
 }
 
 /**
@@ -125,6 +152,9 @@ function isValidAchievementLevel(level: string): boolean {
   return validLevels.includes(level);
 }
 
+// Counter for ensuring unique nullifiers in concurrent operations
+let nullifierCounter = 0;
+
 /**
  * Generate nullifier for replay attack prevention
  */
@@ -135,14 +165,25 @@ export function generateNullifier(
   const logger = new CircuitLogger('nullifier-generation');
 
   try {
+    // Validate inputs
+    if (!credential) {
+      throw new Error('Credential is required');
+    }
+
+    // Only add counter when using default timestamp to ensure uniqueness in concurrent operations
+    // When a specific timestamp is provided, use it as-is for deterministic behavior
+    const isDefaultTimestamp = arguments.length === 1; // Check if timestamp was provided
+    const uniqueTimestamp = isDefaultTimestamp
+      ? `${timestamp}-${++nullifierCounter}`
+      : timestamp.toString();
+
     logger.debug('Generating nullifier', {
       credentialId: credential.credentialId,
-      timestamp,
+      timestamp: uniqueTimestamp,
     });
 
-    // This would typically use a cryptographic hash function
-    // For now, we'll use a simple hash-like function
-    const data = `${credential.licenseNumber}-${credential.credentialId}-${timestamp}`;
+    // Create deterministic data for nullifier generation
+    const data = `${credential.licenseNumber}-${credential.credentialId}-${uniqueTimestamp}`;
     const nullifier = `0x${Buffer.from(data)
       .toString('hex')
       .padStart(40, '0')}`;
@@ -155,7 +196,7 @@ export function generateNullifier(
     return nullifier;
   } catch (error) {
     logger.error('Failed to generate nullifier', error as Error, {
-      credentialId: credential.credentialId,
+      credentialId: credential?.credentialId,
       timestamp,
     });
     throw error;
@@ -172,6 +213,14 @@ export function verifyCredentialAuthenticity(
   const logger = new CircuitLogger('credential-authenticity');
 
   try {
+    // Validate inputs
+    if (!credential) {
+      throw new Error('Credential is required');
+    }
+    if (expectedIssuer === null || expectedIssuer === undefined) {
+      throw new Error('Expected issuer is required');
+    }
+
     logger.debug('Verifying credential authenticity', {
       credentialId: credential.credentialId,
       expectedIssuer,
@@ -191,7 +240,7 @@ export function verifyCredentialAuthenticity(
     return isAuthentic;
   } catch (error) {
     logger.error('Failed to verify credential authenticity', error as Error, {
-      credentialId: credential.credentialId,
+      credentialId: credential?.credentialId,
       expectedIssuer,
     });
     throw error;
@@ -203,6 +252,11 @@ export function verifyCredentialAuthenticity(
  */
 export function isCredentialActive(credential: Credential): boolean {
   const logger = new CircuitLogger('credential-status-check');
+
+  // Validate inputs
+  if (!credential) {
+    throw new Error('Credential is required');
+  }
 
   const activeLevels = ['Passed', 'Pending'];
   const isActive = activeLevels.includes(credential.achievementLevel);
@@ -221,6 +275,11 @@ export function isCredentialActive(credential: Credential): boolean {
  */
 export function getCredentialStatus(credential: Credential): string {
   const logger = new CircuitLogger('credential-status-determination');
+
+  // Validate inputs
+  if (!credential) {
+    throw new Error('Credential is required');
+  }
 
   let status: string;
 
