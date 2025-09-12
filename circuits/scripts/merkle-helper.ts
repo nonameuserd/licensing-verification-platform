@@ -69,10 +69,20 @@ export function toField(x: bigint | number | string): bigint {
   if (typeof x === 'bigint') return x;
   if (typeof x === 'number') return BigInt(x);
   if (typeof x === 'string') {
-    if (x.startsWith('0x')) return BigInt(x);
-    // Check if string is numeric
+    // If string looks like a hex literal, ensure it has hex digits after 0x
+    if (x.startsWith('0x')) {
+      const hex = x.slice(2);
+      // Accept only when there is at least one hex digit and all characters are valid hex
+      if (hex.length > 0 && /^[0-9a-fA-F]+$/.test(hex)) {
+        return BigInt(x);
+      }
+      // Otherwise fall through to hashing fallback
+    }
+
+    // Check if string is numeric (base 10)
     if (/^\d+$/.test(x)) return BigInt(x);
-    // For non-numeric strings, use a simple hash to get a field element
+
+    // For non-numeric or invalid-hex strings, use a deterministic hash to derive a field element
     const hash = createHash('sha256').update(x).digest('hex');
     return BigInt('0x' + hash);
   }
