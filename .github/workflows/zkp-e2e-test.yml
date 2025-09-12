@@ -1,0 +1,46 @@
+name: ZKP End-to-End Tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'circuits/**'
+      - '.github/workflows/zkp-e2e-test.yml'
+  pull_request:
+    paths:
+      - 'circuits/**'
+
+jobs:
+  zkp-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build shared package
+        run: npx nx build shared
+
+      - name: Run ZKP end-to-end workflow
+        env:
+          HOLDER_NAME: 'CI Test'
+          LICENSE_NUMBER: 'CI000'
+          EXAM_ID: 'CI_TEST'
+          ACHIEVEMENT_LEVEL: 'Passed'
+          ISSUED_DATE: '2024-01-01'
+          EXPIRY_DATE: '2025-01-01'
+          ISSUER: 'CI'
+          HOLDER_DOB: '1990-01-01'
+          NULLIFIER: '0x1'
+          PRIVATE_KEY: '0x2'
+        run: |
+          chmod +x circuits/scripts/ci-zkp-e2e.sh
+          ./circuits/scripts/ci-zkp-e2e.sh

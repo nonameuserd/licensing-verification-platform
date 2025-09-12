@@ -20,6 +20,11 @@
     "rootDir": ".."
   },
   "files": [],
+  "references": [
+    {
+      "path": "../shared/tsconfig.lib.json"
+    }
+  ],
   "include": ["src/**/*", "scripts/**/*", "*.d.ts"],
   "exclude": ["node_modules", "dist", "build"]
 }

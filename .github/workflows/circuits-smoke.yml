@@ -30,10 +30,15 @@ jobs:
         run: |
           yarn build:ts
 
-      - name: Run generate-proof in INPUT_ONLY mode
+      - name: Verification key consistency check
+        working-directory: circuits
+        run: |
+          # run the check to ensure zkey verification_key.json matches contract constants
+          npx ts-node --files scripts/check-vk-onchain.ts
+
+      - name: Run ZKP smoke test (lightweight)
         working-directory: circuits
         env:
-          INPUT_ONLY: '1'
           HOLDER_NAME: 'CI Test'
           LICENSE_NUMBER: 'CI000'
           EXAM_ID: 'CI_TEST'
@@ -45,4 +50,6 @@ jobs:
           NULLIFIER: '0x1'
           PRIVATE_KEY: '0x2'
         run: |
-          /usr/bin/env ts-node scripts/generate-proof.ts
+          # Run lightweight ZKP smoke test: generate proof only (no full setup/on-chain verify)
+          echo "Running ZKP smoke test (lightweight)..."
+          yarn ci-local:gen-proof

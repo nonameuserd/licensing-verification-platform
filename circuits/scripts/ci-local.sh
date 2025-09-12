@@ -51,7 +51,7 @@ elif [ -f scripts/generate-verifier.ts ]; then
   fi
 fi
 
-npx hardhat node --config hardhat.config.cjs --hostname 127.0.0.1 &
+npx hardhat node --config hardhat-config/hardhat.config.ts --hostname 127.0.0.1 &
 HARDHAT_PID=$!
 
 function cleanup() {
@@ -106,14 +106,29 @@ else
 fi
 
 echo "Signing canonical input and calculating witness"
-# Use the timestamped proofs folder created by generate-proof. If none exists,
-# fallback to a known example folder.
-PROOFS_DIR=$(ls -1dt proofs/* | head -n 1 || true)
-if [ -z "${PROOFS_DIR:-}" ]; then
-  echo "No proofs directory found; exiting";
-  exit 1
+# Use the timestamped proofs folder created by generate-proof. Prefer the
+# canonical marker `.last-canonical` if present; otherwise pick the latest
+# timestamped folder under proofs/. If none found, we will still continue and
+# let later checks decide whether to skip proving.
+if [ -f .last-canonical ]; then
+  PROOFS_CAND=$(cat .last-canonical)
+  if [ -d "${PROOFS_CAND}" ]; then
+    PROOFS_DIR=${PROOFS_CAND}
+  fi
 fi
-echo "Using proofs folder: ${PROOFS_DIR}"
+if [ -z "${PROOFS_DIR:-}" ]; then
+  # Pick the newest directory under proofs/ (ignore files)
+  PROOFS_DIR=$(ls -1dt proofs/*/ 2>/dev/null | head -n 1 || true)
+  # Strip trailing slash if present
+  if [ -n "${PROOFS_DIR}" ]; then
+    PROOFS_DIR=${PROOFS_DIR%/}
+  fi
+fi
+if [ -z "${PROOFS_DIR:-}" ]; then
+  echo "No proofs directory found; some steps may be skipped later"
+else
+  echo "Using proofs folder: ${PROOFS_DIR}"
+fi
 
 # Sign the canonical input (uses the repo's CommonJS signer)
 if [ -f scripts/sign-with-zkkit-blake.cjs ]; then
@@ -150,13 +165,24 @@ fi
 
 # Use the generated zkey (or an existing dist zkey) to prove.
 ZKEY_PATH=""
+# Prefer a local zkey under zkey/ but accept mirrored dist artifacts too.
 if [ -f zkey/ExamProof_0001.zkey ]; then
   ZKEY_PATH=zkey/ExamProof_0001.zkey
 elif [ -f dist/circuits/zkey/ExamProof_0001.zkey ]; then
   ZKEY_PATH=dist/circuits/zkey/ExamProof_0001.zkey
 fi
 
-if [ -n "${ZKEY_PATH}" ] && [ -f "${PROOFS_DIR}/witness.wtns" ]; then
+# Determine whether a witness exists in the chosen proofs dir. If PROOFS_DIR
+# wasn't discovered, try to find any witness under proofs/*/witness.wtns.
+WITNESS_PATH=""
+if [ -n "${PROOFS_DIR:-}" ] && [ -f "${PROOFS_DIR}/witness.wtns" ]; then
+  WITNESS_PATH="${PROOFS_DIR}/witness.wtns"
+else
+  # find any witness under proofs/ timestamped folders
+  WITNESS_PATH=$(find proofs -maxdepth 2 -type f -name 'witness.wtns' | head -n 1 || true)
+fi
+
+if [ -n "${ZKEY_PATH}" ] && [ -n "${WITNESS_PATH}" ] && [ -f "${WITNESS_PATH}" ]; then
   echo "Proving using zkey: ${ZKEY_PATH}"
   npx --yes snarkjs groth16 prove "${ZKEY_PATH}" "${PROOFS_DIR}/witness.wtns" "${PROOFS_DIR}/proof.json" "${PROOFS_DIR}/public.json" || true
   # Verify using verification key (prefer locally generated, fallback to dist)

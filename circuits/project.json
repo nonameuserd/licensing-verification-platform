@@ -38,7 +38,7 @@
     "compile": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "circom circuits/src/ExamProof.circom --r1cs --wasm --sym --c -o circuits/build/",
+        "command": "if [ -x circuits/.bin/circom ]; then circuits/.bin/circom circuits/src/ExamProof.circom --r1cs --wasm --sym --c -o circuits/build/; else circom circuits/src/ExamProof.circom --r1cs --wasm --sym --c -o circuits/build/; fi",
         "cwd": "."
       }
     },

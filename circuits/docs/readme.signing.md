@@ -4,7 +4,7 @@ Prereqs
 
 - Node (>=22)
 - npx (snarkjs will be run via npx)
-- Install deps in repo root: `yarn` or `npm install`
+- Install deps in repo root: `yarn` or `yarn install`
 - The project includes a helper signer using @zk-kit/eddsa-poseidon (blake-2b). See `scripts/sign-with-zkkit-blake.cjs` in this folder.
 
 Steps
@@ -93,11 +93,11 @@ Regenerating or rotating a zkey (recommended workflow)
    cd circuits
 
    # 1) generate a ptau (if you don't have a trusted setup):
-   npx --yes snarkjs powersoftau new bn128 12 pot12_0000.ptau
-   npx --yes snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="init contribution"
+   npx --yes snarkjs powersoftau new bn128 16 pot16_0000.ptau
+   npx --yes snarkjs powersoftau contribute pot16_0000.ptau pot16_0001.ptau --name="init contribution"
 
    # 2) setup the zkey
-   npx --yes snarkjs groth16 setup build/ExamProof.r1cs zkey/pot12_0001.ptau zkey/ExamProof_0001.zkey
+   npx --yes snarkjs groth16 setup build/ExamProof.r1cs zkey/pot16_0001.ptau zkey/ExamProof_0001.zkey
 
    # 3) (optional) contribute to the zkey to make it unique
    npx --yes snarkjs zkey contribute setup/ExamProof_0001.zkey setup/ExamProof_0001.zkey --name="dev contribution" -v

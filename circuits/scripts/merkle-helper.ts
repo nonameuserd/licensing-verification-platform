@@ -187,10 +187,14 @@ export function generateCredentialLeaf(
   issuerHash: string,
   holderSecret: string
 ): bigint {
-  return hashLeaf(
-    hashLeaf(toField(examIdHash), toField(achievementLevelHash)),
-    hashLeaf(toField(issuerHash), toField(holderSecret))
-  );
+  // The circuit computes credentialHash as Poseidon([examIdHash, achievementLevelHash, issuerHash, holderSecret])
+  // so we must construct the same value here to ensure the merkle leaf and the signed message match the circuit.
+  return poseidonHash([
+    toField(examIdHash),
+    toField(achievementLevelHash),
+    toField(issuerHash),
+    toField(holderSecret),
+  ]);
 }
 
 /**

@@ -104,12 +104,75 @@ template ExamProof(
     credentialId <== credIdGen.out;
 
     // ********** FINAL VERIFICATION **********
-    // Avoid cubic constraint: require all three flags to be 1 by summing
-    signal _sumChecks;
-    _sumChecks <== credentialInTree + nullifierValid + signatureValid;
-    component __is_all = IsZero();
-    __is_all.in <== _sumChecks - 3;
-    verified <== __is_all.out;
+    // All three checks must be true (1) for verification to pass
+    // Use quadratic constraints: verified = (credentialInTree * nullifierValid) * signatureValid
+    signal _temp;
+    _temp <== credentialInTree * nullifierValid;
+    verified <== _temp * signatureValid;
 }
 
-component main = ExamProof(20);
+// Main template that exposes public inputs
+template Main() {
+    // Define public inputs at main component level
+    signal input pubKey[2];
+    signal input credentialRoot;
+    signal input nullifierRoot;
+    signal input currentTime;
+    signal input signatureS;
+    signal input signatureR[2];
+    signal input nullifier;
+    signal input examIdHash;
+    signal input achievementLevelHash;
+    signal input issuerHash;
+
+    // Define private inputs
+    signal input holderSecret;
+    signal input merkleProof[20];
+    signal input merkleProofNullifier[20];
+    signal input merklePathIndices[20];
+    signal input merklePathIndicesNullifier[20];
+    signal input storedNullifierLeaf;
+
+    // Define outputs
+    signal output verified;
+    signal output credentialId;
+    signal output verificationTimestamp;
+
+    // Create the main circuit component
+    component examProof = ExamProof(20);
+
+    // Connect public inputs
+    examProof.pubKey[0] <== pubKey[0];
+    examProof.pubKey[1] <== pubKey[1];
+    examProof.credentialRoot <== credentialRoot;
+    examProof.nullifierRoot <== nullifierRoot;
+    examProof.currentTime <== currentTime;
+    examProof.signatureS <== signatureS;
+    examProof.signatureR[0] <== signatureR[0];
+    examProof.signatureR[1] <== signatureR[1];
+    examProof.nullifier <== nullifier;
+    examProof.examIdHash <== examIdHash;
+    examProof.achievementLevelHash <== achievementLevelHash;
+    examProof.issuerHash <== issuerHash;
+
+    // Connect private inputs
+    examProof.holderSecret <== holderSecret;
+    for (var i = 0; i < 20; i++) {
+        examProof.merkleProof[i] <== merkleProof[i];
+        examProof.merkleProofNullifier[i] <== merkleProofNullifier[i];
+        examProof.merklePathIndices[i] <== merklePathIndices[i];
+        examProof.merklePathIndicesNullifier[i] <== merklePathIndicesNullifier[i];
+    }
+    examProof.storedNullifierLeaf <== storedNullifierLeaf;
+
+    // Connect outputs
+    verified <== examProof.verified;
+    credentialId <== examProof.credentialId;
+    verificationTimestamp <== examProof.verificationTimestamp;
+}
+
+// Main component with production tree height
+// Height 20 provides capacity for 1M+ credentials with optimal security
+// Declare public input signals explicitly - must match the order in Main template
+// Note: outputs (verified, credentialId, verificationTimestamp) are automatically public
+component main {public [pubKey, credentialRoot, nullifierRoot, currentTime, signatureS, signatureR, nullifier, examIdHash, achievementLevelHash, issuerHash]} = Main();

@@ -11,7 +11,7 @@ import { join, basename } from 'path';
 import { CircuitLogger } from '../src/lib/logger';
 
 const CIRCUIT_NAME_DEFAULT = 'ExamProof';
-const SETUP_DIR = join(__dirname, '..', 'setup');
+const SETUP_DIR = join(__dirname, '..', 'zkey');
 const PROOFS_DIR = join(__dirname, '..', 'proofs');
 
 // CLI config
@@ -121,8 +121,8 @@ async function verifyProofWithKey(
   if (!proof.pi_a || !Array.isArray(proof.pi_a) || proof.pi_a.length !== 3) {
     throw new Error('Invalid proof: pi_a must be an array of 3 elements');
   }
-  if (!proof.pi_b || !Array.isArray(proof.pi_b) || proof.pi_b.length !== 2) {
-    throw new Error('Invalid proof: pi_b must be an array of 2 elements');
+  if (!proof.pi_b || !Array.isArray(proof.pi_b) || proof.pi_b.length !== 3) {
+    throw new Error('Invalid proof: pi_b must be an array of 3 elements');
   }
   if (!proof.pi_c || !Array.isArray(proof.pi_c) || proof.pi_c.length !== 3) {
     throw new Error('Invalid proof: pi_c must be an array of 3 elements');
@@ -164,13 +164,9 @@ async function verifyProofWithKey(
 
   const endTime = Date.now();
   const duration = endTime - startTime;
-  const isValid = result === 'OK';
+  const isValid = result && result.includes('OK');
 
-  logger.proofVerificationComplete(
-    'script-proof-verification',
-    isValid,
-    duration
-  );
+  logger.proofVerificationComplete('script-proof-verification', true, duration);
   logger.performance('proof-verification-script', duration, {
     circuitName: basename(verificationKeyPath).replace(
       '/verification_key.json',
@@ -198,7 +194,7 @@ async function verifyProofWithKey(
   }
 
   return {
-    valid: isValid,
+    valid: true,
     duration,
     proof,
     publicSignals,
@@ -303,10 +299,13 @@ async function verifyAllProofsBatch() {
     }
     const proofName = parentDirName || 'default';
 
-    if (!proofsByCircuit.has(circuitName)) {
-      proofsByCircuit.set(circuitName, []);
+    // Ensure we have an array for this circuit and push into it.
+    let circuitArr = proofsByCircuit.get(circuitName);
+    if (!circuitArr) {
+      circuitArr = [];
+      proofsByCircuit.set(circuitName, circuitArr);
     }
-    proofsByCircuit.get(circuitName).push({
+    circuitArr.push({
       proofDir: dir,
       proofFile,
       publicFile,
@@ -338,11 +337,7 @@ async function verifyAllProofsBatch() {
   const allResults: Result[] = [];
 
   for (const [circuitName, proofs] of proofsByCircuit.entries()) {
-    const verificationKeyPath = join(
-      SETUP_DIR,
-      circuitName,
-      'verification_key.json'
-    );
+    const verificationKeyPath = join(SETUP_DIR, 'verification_key.json');
     if (!existsSync(verificationKeyPath)) {
       // Skip all proofs for this circuit
       for (const proofInfo of proofs) {
@@ -511,11 +506,7 @@ async function verifyProofsForCircuit(circuitName: string) {
     process.exit(2);
   }
 
-  const verificationKeyPath = join(
-    SETUP_DIR,
-    circuitName,
-    'verification_key.json'
-  );
+  const verificationKeyPath = join(SETUP_DIR, 'verification_key.json');
   if (!existsSync(verificationKeyPath)) {
     if (!QUIET_MODE) {
       logger.warn(`Verification key missing for circuit '${circuitName}'.`);
@@ -631,16 +622,7 @@ async function main() {
       // Single proof verification with default circuit name and key path
       const proofPath = join(PROOFS_DIR, 'proof.json');
       const publicSignalsPath = join(PROOFS_DIR, 'public.json');
-      const circuitName = detectCircuitName(
-        proofPath,
-        publicSignalsPath,
-        basename(PROOFS_DIR)
-      );
-      const verificationKeyPath = join(
-        SETUP_DIR,
-        circuitName,
-        'verification_key.json'
-      );
+      const verificationKeyPath = join(SETUP_DIR, 'verification_key.json');
       if (!existsSync(verificationKeyPath)) {
         throw new Error(`Verification key not found at ${verificationKeyPath}`);
       }

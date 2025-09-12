@@ -1,7 +1,7 @@
 # NOTE: pinned base image for reproducible builds
-FROM node:20-bullseye-slim
+FROM node:22-bullseye-slim
 
-# Install system deps
+# Install system deps including Rust
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
@@ -13,6 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
 
+# Install Rust (required for building circom from source)
+RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 # Install circom and snarkjs pinned versions
 ENV CIRCOM_VERSION=2.2.2
 ENV SNARKJS_VERSION=0.7.2
@@ -20,24 +24,17 @@ ENV SNARKJS_VERSION=0.7.2
 # Copy expected checksums into the image so Docker build and CI use the same source-of-truth
 COPY scripts/expected-checksums /tmp/checksums
 
-# Install circom with checksum verification (prefer pinned prebuilt binary; fallback to npm if download or checksum fails)
+# Install circom by building from source (as recommended in official docs)
 RUN set -eux; \
-    CIRCOM_URL="https://github.com/iden3/circom/releases/download/v${CIRCOM_VERSION}/circom-linux-amd64"; \
-    CIRCOM_CHECKSUM="$(tr -d '\n' < /tmp/checksums/circom_v${CIRCOM_VERSION}.sha256)"; \
-        if wget -q --tries=3 --timeout=30 -O /tmp/circom "$CIRCOM_URL"; then \
-            if echo "$CIRCOM_CHECKSUM  /tmp/circom" | sha256sum --check; then \
-                mv /tmp/circom /usr/local/bin/circom; \
-                chmod +x /usr/local/bin/circom; \
-            else \
-                echo "ERROR: circom checksum mismatch; aborting build to avoid producing an image with an unverified circom binary"; \
-                rm -f /tmp/circom || true; \
-                exit 1; \
-            fi; \
-        else \
-            echo "ERROR: failed to download circom from $CIRCOM_URL; aborting build"; \
-            rm -f /tmp/circom || true; \
-            exit 1; \
-        fi
+    echo "Building circom from source as recommended in https://docs.circom.io/getting-started/installation/"; \
+    git clone https://github.com/iden3/circom.git /tmp/circom-src; \
+    cd /tmp/circom-src; \
+    git checkout v${CIRCOM_VERSION}; \
+    cargo build --release; \
+    cp target/release/circom /usr/local/bin/circom; \
+    chmod +x /usr/local/bin/circom; \
+    rm -rf /tmp/circom-src; \
+    circom --version
 
 # Install cosign with checksum verification (pin a known release for reproducibility). If download
 # fails (network or remote issue) continue the build — CI should provide

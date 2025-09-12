@@ -21,7 +21,7 @@ try {
   const candidate14 = join(SETUP_DIR, 'pot14_final.ptau');
   if (existsSync(candidate14)) {
     PTAU_POWER = 14;
-    logger.info('Using existing pot14_final.ptau (PTAU_POWER=14)');
+    logger.info('Using existing pot14_final.ptau', { PTAU_POWER: 14 });
   }
 } catch {
   // keep default
@@ -30,7 +30,7 @@ try {
 function ensureDirectoryExists(dir: string): void {
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
-    logger.info(`Created directory: ${dir}`);
+    logger.info('Created directory', { directory: dir });
   }
 }
 
@@ -116,8 +116,30 @@ function main(): void {
         'circomlib',
         'circuits'
       );
+      // Prefer a repo-local circom binary (./.bin/circom) to avoid system
+      // version mismatches that can cause parse errors. Check a few likely
+      // locations and use the first one that exists.
+      const localCircomCandidates = [
+        join(process.cwd(), '.bin', 'circom'),
+        join(process.cwd(), 'circuits', '.bin', 'circom'),
+        join(__dirname, '..', '.bin', 'circom'),
+      ];
+
+      let circomCmd = 'circom';
+      for (const cand of localCircomCandidates) {
+        try {
+          if (existsSync(cand)) {
+            circomCmd = cand;
+            logger.info(`Using local circom binary: ${cand}`);
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       runCommand(
-        `circom ${srcPath} -l ${includeLocal} -l ${includeCircomlib} --r1cs --wasm --sym --c -o ${BUILD_DIR}/`,
+        `${circomCmd} ${srcPath} -l ${includeLocal} -l ${includeCircomlib} --r1cs --wasm --sym --c -o ${BUILD_DIR}/`,
         'Circuit compilation',
         logger
       );

@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
     "moduleResolution": "node",
     "target": "es2015",
     "esModuleInterop": true,
@@ -14,7 +14,7 @@
     }
   },
   "ts-node": {
-    "esm": false,
+    "esm": true,
     "experimentalSpecifierResolution": "node",
     "require": ["tsconfig-paths/register"],
     "files": true

@@ -73,12 +73,12 @@ snarkjs r1cs info build/ExamProof.r1cs
 node build/ExamProof_js/generate_witness.js build/ExamProof_js/ExamProof.wasm input.json witness.wtns
 
 # Create a proof (example with Groth16 using snarkjs)
-snarkjs groth16 setup build/ExamProof.r1cs pot12_final.ptau build/zkkey_final.zkey
+snarkjs groth16 setup build/ExamProof.r1cs pot16_final.ptau build/zkkey_final.zkey
 snarkjs groth16 prove build/zkkey_final.zkey witness.wtns proof.json public.json
 snarkjs groth16 verify build/verification_key.json public.json proof.json
 ```
 
-Replace `pot12_final.ptau` and other filenames with your trusted setup artifacts. The project may use a different proving system (PLONK, etc.); adapt commands accordingly.
+Replace `pot16_final.ptau` and other filenames with your trusted setup artifacts. The project may use a different proving system (PLONK, etc.); adapt commands accordingly.
 
 Files
 

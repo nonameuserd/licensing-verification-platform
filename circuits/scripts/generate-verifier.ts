@@ -14,7 +14,7 @@ import { CircuitLogger } from '../src/lib/logger';
 
 const CIRCUIT_NAME = process.env['CIRCUIT_NAME'] || 'ExamProof';
 const ROOT_DIR = join(__dirname, '..');
-const SETUP_DIR = join(ROOT_DIR, 'setup');
+const SETUP_DIR = join(ROOT_DIR, 'zkey');
 const CONTRACTS_DIR = join(ROOT_DIR, 'contracts');
 
 const snarkJsCommand = 'snarkjs';

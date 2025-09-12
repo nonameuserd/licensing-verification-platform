@@ -8,7 +8,7 @@ import {
   generateCredentialLeaf,
   generateNullifierLeaf,
 } from './merkle-helper';
-import { circuitLogger as logger } from '../src/lib/logger.js';
+import { circuitLogger as logger } from '../src/lib/logger';
 
 async function main() {
   await initPoseidon();
@@ -32,7 +32,7 @@ async function main() {
   const achievementLevel = process.env['ACHIEVEMENT_LEVEL'] || 'Passed';
   const issuer = process.env['ISSUER'] || 'LocalIssuer';
   const privateKey = process.env['PRIVATE_KEY'] || '0xabcdef1234';
-  const nullifier = process.env['NULLIFIER'] || '0x1234';
+  const nullifier = process.env['NULLIFIER'] || '0x9999';
 
   const N = 1 << TREE_HEIGHT;
   // Build credential leaves
@@ -59,8 +59,12 @@ async function main() {
   logger.info(`Wrote credential tree: ${credPath}`);
 
   // Build nullifier leaves
+  // For non-inclusion proof, we need a different nullifier in the tree
+  // than the one we're trying to prove is not there
   const nullLeaves: (string | number)[] = new Array(N).fill('0');
-  const nullLeaf = generateNullifierLeaf(nullifier);
+  // Use a different nullifier value for the tree (not the one we'll prove non-inclusion for)
+  const treeNullifier = nullifier;
+  const nullLeaf = generateNullifierLeaf(treeNullifier);
   nullLeaves[NULLIFIER_INDEX] = nullLeaf.toString();
   const { root: nullRoot, layers: nullLayers } = buildTree(
     nullLeaves,

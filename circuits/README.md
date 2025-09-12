@@ -12,6 +12,38 @@ This quickstart shows how to verify and reproduce the circuit artifacts produced
 yarn run generate-proof:tsnode
 ```
 
+### Artifact preconditions & CI coverage
+
+Short summary:
+
+- Required on-disk artifacts for proof generation:
+
+  - compiled wasm: `circuits/build/ExamProof_js/ExamProof.wasm` (or `circuits/build/ExamProof.wasm`)
+  - proving key: `circuits/zkey/ExamProof_0001.zkey`
+  - symbol file (optional but recommended): `circuits/build/ExamProof.sym`
+
+- What CI-local / GitHub CI runs and validates:
+
+  1.  install & build helpers (workspace linking)
+  2.  start a local Hardhat node (or use a service container in GitHub Actions)
+  3.  run the generator (`generate-proof.ts`) which:
+      - writes a timestamped proof folder under `circuits/proofs/<timestamp>/`
+      - emits `canonical-input.json`, `input.json` and `.canonical-path`
+      - runs `snarkjs wtns calculate` to produce `witness.wtns`
+      - runs `snarkjs groth16 prove` to produce `proof.json` and `public.json`
+  4.  deploy the verifier contract and call on-chain verification (the script exits non-zero on failure)
+
+- How CI asserts success quickly:
+
+  - `generate-proof.ts` writes a top-level marker `circuits/.last-canonical` (points at the latest canonical input)
+  - the generator logs a machine-friendly marker: `CANONICAL_PATH=/abs/path/to/canonical-input.json`
+  - exit codes: failure to produce a valid witness or proof makes the script exit non-zero so CI fails fast
+  - (we added a quick sanity check in `circuits/scripts/gen-proof-ci.sh`) that verifies `circuits/.last-canonical` exists, that `witness.wtns` is present and non-empty, and (if `snarkjs` is available) that `snarkjs wtns info` can parse the witness
+
+- Tips:
+  - If your CI job obtains artifacts from a release or artifact store, ensure the `zkey` and `build` artifacts are present before running `generate-proof`.
+  - To only produce the canonical input without calculating witness/proof set `INPUT_ONLY=1` in the environment when running the generator.
+
 The `scripts/verify-binaries-local.sh` script downloads pinned `circom` and
 `cosign` binaries and verifies checksums. It performs checksum verification
 and exits successfully (no nested Docker builds are attempted).

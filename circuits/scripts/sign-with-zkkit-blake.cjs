@@ -47,7 +47,7 @@ const path = require('path');
     let secretScalar = null;
     if (typeof zk.deriveSecretScalar === 'function') {
       secretScalar = zk.deriveSecretScalar(priv);
-      console.log('derived secretScalar');
+      console.log('derived secretScalar', secretScalar);
     }
 
     // sign the credentialHash: convert to string as message

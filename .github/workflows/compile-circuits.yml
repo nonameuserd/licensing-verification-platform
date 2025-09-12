@@ -5,7 +5,12 @@ on:
   push:
     branches:
       - main
+      - develop
       - features
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
 jobs:
   compile:
@@ -123,6 +128,13 @@ jobs:
           name: circuits-perf-result
           path: artifacts/perf-result.json
 
+      - name: Install cosign for signing
+        run: |
+          # Install cosign for artifact signing
+          curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+          chmod +x cosign-linux-amd64
+          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+
       - name: Generate and sign artifact metadata (inside container)
         env:
           COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
@@ -135,6 +147,14 @@ jobs:
         run: |
           ls -la artifacts || true
 
+      - name: Install cosign
+        if: always()
+        run: |
+          # Install cosign for signature verification
+          curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+          chmod +x cosign-linux-amd64
+          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+
       - name: Verify artifact signature
         if: always()
         env:
@@ -144,7 +164,10 @@ jobs:
           circuits/scripts/ci-verify-signature.sh
 
       - name: Bump tag for main (create annotated tag, do not publish)
-        if: github.ref == 'refs/heads/main'
+        if: |
+          github.ref == 'refs/heads/main' && 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
         id: semver_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -179,7 +202,10 @@ jobs:
           fi
 
       - name: Create GitHub Release for main (draft)
-        if: github.ref == 'refs/heads/main'
+        if: |
+          github.ref == 'refs/heads/main' && 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
         id: create_main_release
         uses: actions/create-release@v1
         with:
@@ -190,7 +216,10 @@ jobs:
           prerelease: false
 
       - name: Upload TARball to Release (main)
-        if: github.ref == 'refs/heads/main'
+        if: |
+          github.ref == 'refs/heads/main' && 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_main_release.outputs.upload_url }}
@@ -199,7 +228,10 @@ jobs:
           asset_content_type: application/gzip
 
       - name: Upload metadata and signature to Release (main)
-        if: github.ref == 'refs/heads/main'
+        if: |
+          github.ref == 'refs/heads/main' && 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_main_release.outputs.upload_url }}
@@ -208,7 +240,10 @@ jobs:
           asset_content_type: application/json
 
       - name: Upload metadata signature to Release (main)
-        if: github.ref == 'refs/heads/main'
+        if: |
+          github.ref == 'refs/heads/main' && 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_main_release.outputs.upload_url }}

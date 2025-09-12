@@ -2,6 +2,10 @@
 
 ## The Monopoly Thesis: "Verifiable Credential Infrastructure for Professional Licensing"
 
+### "We built the first blockchain verification platform that makes professional credential verification as fast as a credit card transaction." 'Stripe for Professional Credentials'
+
+**eliminates the $50-200 cost per credential verification**
+
 **Objective**: Become the canonical verification layer for professional licensing boards (medical, legal, engineering, financial services) by combining ZKPs for privacy-preserving credential verification, web-based platform, and on-chain credential registry.
 
 **Core Value Proposition**:

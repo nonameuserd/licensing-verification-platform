@@ -34,7 +34,7 @@ build-ts:
 
 start-hardhat:
 	@echo "Starting local Hardhat node (background)..."
-	cd $(REPO_ROOT)/circuits && npx hardhat node --config hardhat.config.cjs --hostname 127.0.0.1 &
+	cd $(REPO_ROOT)/circuits && npx hardhat node --config hardhat-config/hardhat.config.ts --hostname 127.0.0.1 &
 
 gen-proof:
 	@echo "Generating proof and running on-chain verify (local)..."

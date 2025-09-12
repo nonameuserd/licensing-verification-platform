@@ -19,9 +19,13 @@ npx nx build shared || true
 cd circuits
 yarn install --non-interactive || true
 
-echo "Starting local hardhat node in background (using circuits/hardhat.config.js)..."
-# Start hardhat node from the circuits folder so the locally-installed hardhat is used
-npx hardhat node --config hardhat.config.js --hostname 127.0.0.1 &
+# Install hardhat in hardhat-config directory for ESM support
+cd hardhat-config
+yarn install --non-interactive || true
+
+echo "Starting local hardhat node in background (using hardhat-config/hardhat.config.ts)..."
+# Start hardhat node from the hardhat-config folder with ESM support
+npx hardhat node --config hardhat.config.ts --hostname 127.0.0.1 &
 HARDHAT_PID=$!
 # return to repo root to continue orchestration
 cd ..
@@ -59,21 +63,17 @@ yarn install --frozen-lockfile
 yarn build:ts
 
 echo "Generating proof (using compiled JS)"
-export HOLDER_NAME="CI HOLDER"
-export LICENSE_NUMBER="CI123"
-export EXAM_ID="CI_TEST"
+export HOLDER_NAME="John Doe"
+export LICENSE_NUMBER="MD123456"
+export EXAM_ID="USMLE_STEP_1"
 export ACHIEVEMENT_LEVEL="Passed"
-export ISSUED_DATE="2025-01-01"
-export EXPIRY_DATE="2026-01-01"
-export ISSUER="CI_ISSUER"
-export HOLDER_DOB="1990-01-01"
-export NULLIFIER="0x1"
-# Do NOT hard-code real private keys in CI scripts. Use repository secrets
-# (e.g., PRIVATE_KEY) injected by CI. If not provided, use a non-sensitive placeholder.
-if [[ -z "${PRIVATE_KEY:-}" ]]; then
-	echo "PRIVATE_KEY not provided via env; using non-sensitive placeholder for smoke runs"
-	export PRIVATE_KEY="0x1"
-fi
+export ISSUED_DATE="2024-01-15"
+export EXPIRY_DATE="2025-01-15"
+export ISSUER="FSMB"
+export HOLDER_DOB="1990-05-20"
+export NULLIFIER="0x1234567890abcdef"
+# Use the same private key that was used to build the Merkle trees
+export PRIVATE_KEY="0xabcdef1234567890"
 
 # Run the proof generator via ts-node (avoids relying on compiled artifact)
 # Ensure the built shared package is resolvable by circuits when running inside container
@@ -87,12 +87,46 @@ echo "Using Yarn workspaces at repo root to resolve workspace packages (no manua
 # rely on package "main" pointing at built artifacts during CI/dev runs.
 yarn run generate-proof:tsnode
 
+# Quick sanity checks: ensure canonical path marker and witness exist and are readable
+LAST_CANONICAL="$ROOT_DIR/.last-canonical"
+if [[ ! -f "${LAST_CANONICAL}" ]]; then
+	echo "No canonical path marker: ${LAST_CANONICAL}" >&2
+	exit 1
+fi
+
+# Derive witness path from canonical path's directory
+WPATH="$(dirname "$(cat "${LAST_CANONICAL}")")/witness.wtns"
+if [[ ! -s "${WPATH}" ]]; then
+	echo "Witness missing or empty: ${WPATH}" >&2
+	exit 1
+fi
+
+# If snarkjs is available, verify the witness format is parseable before proceeding
+if command -v snarkjs >/dev/null 2>&1; then
+	if ! snarkjs fi "${WPATH}" >/dev/null 2>&1; then
+		echo "snarkjs cannot read witness (invalid format): ${WPATH}" >&2
+		exit 1
+	fi
+else
+	echo "snarkjs not found in PATH; skipping witness format check"
+fi
+
 echo "Deploying verifier (compiled)"
-node dist/scripts/deploy-verifier.js
+echo "Current directory: $(pwd)"
+echo "Looking for: dist/circuits/scripts/deploy-verifier.js"
+ls -la dist/circuits/scripts/ || echo "Directory not found"
+# Ensure we're in the circuits directory
+cd "$ROOT_DIR"
+echo "Changed to circuits directory: $(pwd)"
+node dist/circuits/scripts/deploy-verifier.js
 
 echo "Calling on-chain verify (compiled)"
-node dist/scripts/call-onchain-verify.js
+node dist/circuits/scripts/call-onchain-verify.js
 
 # Clean shutdown
 echo "Shutting down hardhat node"
 kill $HARDHAT_PID || true
+
+# Clean up temp directory
+echo "Cleaning up hardhat temp directory"
+rm -rf hardhat-config
