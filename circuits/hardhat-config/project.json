@@ -1,0 +1,18 @@
+{
+  "name": "circuits-hardhat-config",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "root": "circuits/hardhat-config",
+  "projectType": "application",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "circuits/hardhat-config/**/*.ts",
+          "circuits/hardhat-config/**/*.js"
+        ]
+      }
+    }
+  },
+  "tags": ["scope:circuits", "type:tooling"]
+}

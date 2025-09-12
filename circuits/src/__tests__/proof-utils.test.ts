@@ -12,7 +12,6 @@ import {
   VerificationResult,
 } from '../lib/proof-utils';
 import { PublicCredentialData } from '../lib/types';
-import { CircuitLogger } from '../lib/logger';
 
 // Mock the logger to avoid console output during tests
 jest.mock('../lib/logger', () => ({
