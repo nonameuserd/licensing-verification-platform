@@ -38,6 +38,11 @@ jobs:
         run: |
           yarn build:ts
 
+      - name: Run circuits setup to generate verification key
+        working-directory: circuits
+        run: |
+          yarn setup
+
       - name: Verification key consistency check
         working-directory: circuits
         run: |
