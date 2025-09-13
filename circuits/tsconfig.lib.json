@@ -6,7 +6,7 @@
     "types": ["node"],
     "composite": true,
     "incremental": true,
-    "rootDir": ".."
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
   "exclude": [

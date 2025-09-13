@@ -55,3 +55,4 @@ circuits/zkey/
 circuits/*.sym
 circuits/circomlibjs.d.ts
 circuits/dist/
+circuits/trees/

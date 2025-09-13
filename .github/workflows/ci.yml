@@ -2,41 +2,23 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, features]
   pull_request:
     branches: [main, develop]
 
 jobs:
-  build-and-test:
+  smoke:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'yarn'
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Build
-        run: yarn build
-
-      - name: Test (force circuits uncached)
-        run: |
-          # Run all tests (cached) then rerun circuits tests without Nx cache to avoid flaky cached results
-          yarn test || true
-          npx nx run circuits:test --skip-nx-cache
-
-      - name: Request checks for commit
-        if: github.event_name == 'push'
-        run: |
-          echo "Requesting checks for commit: ${{ github.sha }}"
-          # This ensures checks are automatically requested for pushes
-          # as per GitHub's request-checks: true functionality
+      - name: Run CI pipeline
+        run: yarn ci

@@ -12,6 +12,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
       - name: Require approval and publish draft release
         run: |
           echo "This workflow is intended to be manually dispatched after a draft release is reviewed."

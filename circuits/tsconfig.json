@@ -16,8 +16,7 @@
     "types": ["jest", "node"],
     "target": "es2020",
     "lib": ["es2020", "dom"],
-    "typeRoots": ["./types", "./node_modules/@types", "../node_modules/@types"],
-    "rootDir": ".."
+    "typeRoots": ["./types", "./node_modules/@types", "../node_modules/@types"]
   },
   "files": [],
   "references": [
