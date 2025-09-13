@@ -8,7 +8,7 @@ export class LicensingVerificationPlatformStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // DynamoDB table for credential storage using TableV2
+    // DynamoDB table for credential storage
     const credentialsTable = new dynamodb.TableV2(this, 'CredentialsTable', {
       tableName: 'licensing-verification-credentials',
       partitionKey: {
@@ -35,7 +35,7 @@ export class LicensingVerificationPlatformStack extends cdk.Stack {
     const backendLambda = new lambda.Function(this, 'BackendLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'main.handler',
-      code: lambda.Code.fromAsset('../dist/backend'),
+      code: lambda.Code.fromAsset('../../../backend/dist'),
       environment: {
         CREDENTIALS_TABLE_NAME: credentialsTable.tableName,
         NODE_ENV: 'production',

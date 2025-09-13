@@ -1,0 +1,1580 @@
+{
+  "graph": {
+    "nodes": {
+      "admin-dashboard-e2e": {
+        "name": "admin-dashboard-e2e",
+        "type": "e2e",
+        "data": {
+          "root": "frontend/admin-dashboard-e2e",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "frontend/admin-dashboard-e2e",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e": {
+              "options": {
+                "cwd": "frontend/admin-dashboard-e2e",
+                "command": "playwright test"
+              },
+              "metadata": {
+                "technologies": ["playwright"],
+                "description": "Runs Playwright Tests",
+                "help": {
+                  "command": "yarn playwright test --help",
+                  "example": {
+                    "options": {
+                      "workers": 1
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                {
+                  "projects": ["admin-dashboard"],
+                  "target": "preview"
+                }
+              ],
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["@playwright/test"]
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/dist/.playwright/test-output",
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/dist/.playwright/playwright-report"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e-ci--src/example.spec.ts": {
+              "options": {
+                "cwd": "frontend/admin-dashboard-e2e",
+                "env": {
+                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "dist/.playwright/playwright-report/src-example-spec-ts",
+                  "PLAYWRIGHT_HTML_REPORT": "dist/.playwright/playwright-report/src-example-spec-ts"
+                },
+                "command": "playwright test src/example.spec.ts --output=dist/.playwright/test-output/src-example-spec-ts"
+              },
+              "metadata": {
+                "technologies": ["playwright"],
+                "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+                "help": {
+                  "command": "yarn playwright test --help",
+                  "example": {
+                    "options": {
+                      "workers": 1
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                {
+                  "projects": ["admin-dashboard"],
+                  "target": "preview"
+                }
+              ],
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["@playwright/test"]
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/dist/.playwright/test-output/src-example-spec-ts",
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/dist/.playwright/playwright-report/src-example-spec-ts"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e-ci": {
+              "executor": "nx:noop",
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["@playwright/test"]
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/dist/.playwright/test-output",
+                "{workspaceRoot}/frontend/admin-dashboard-e2e/dist/.playwright/playwright-report"
+              ],
+              "dependsOn": [
+                {
+                  "target": "e2e-ci--src/example.spec.ts",
+                  "projects": "self",
+                  "params": "forward"
+                }
+              ],
+              "metadata": {
+                "technologies": ["playwright"],
+                "description": "Runs Playwright Tests in CI",
+                "nonAtomizedTarget": "e2e",
+                "help": {
+                  "command": "yarn playwright test --help",
+                  "example": {
+                    "options": {
+                      "workers": 1
+                    }
+                  }
+                }
+              },
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "nx e2e admin-dashboard-e2e"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "metadata": {
+            "targetGroups": {
+              "E2E (CI)": ["e2e-ci--src/example.spec.ts", "e2e-ci"]
+            }
+          },
+          "name": "admin-dashboard-e2e",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "frontend/admin-dashboard-e2e/src",
+          "tags": [],
+          "implicitDependencies": ["admin-dashboard"]
+        }
+      },
+      "employer-portal-e2e": {
+        "name": "employer-portal-e2e",
+        "type": "e2e",
+        "data": {
+          "root": "frontend/employer-portal-e2e",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "frontend/employer-portal-e2e",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/frontend/employer-portal-e2e/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e": {
+              "options": {
+                "cwd": "frontend/employer-portal-e2e",
+                "command": "playwright test"
+              },
+              "metadata": {
+                "technologies": ["playwright"],
+                "description": "Runs Playwright Tests",
+                "help": {
+                  "command": "yarn playwright test --help",
+                  "example": {
+                    "options": {
+                      "workers": 1
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                {
+                  "projects": ["employer-portal"],
+                  "target": "preview"
+                }
+              ],
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["@playwright/test"]
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/frontend/employer-portal-e2e/dist/.playwright/test-output",
+                "{workspaceRoot}/frontend/employer-portal-e2e/dist/.playwright/playwright-report"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e-ci--src/example.spec.ts": {
+              "options": {
+                "cwd": "frontend/employer-portal-e2e",
+                "env": {
+                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "dist/.playwright/playwright-report/src-example-spec-ts",
+                  "PLAYWRIGHT_HTML_REPORT": "dist/.playwright/playwright-report/src-example-spec-ts"
+                },
+                "command": "playwright test src/example.spec.ts --output=dist/.playwright/test-output/src-example-spec-ts"
+              },
+              "metadata": {
+                "technologies": ["playwright"],
+                "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+                "help": {
+                  "command": "yarn playwright test --help",
+                  "example": {
+                    "options": {
+                      "workers": 1
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                {
+                  "projects": ["employer-portal"],
+                  "target": "preview"
+                }
+              ],
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["@playwright/test"]
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/frontend/employer-portal-e2e/dist/.playwright/test-output/src-example-spec-ts",
+                "{workspaceRoot}/frontend/employer-portal-e2e/dist/.playwright/playwright-report/src-example-spec-ts"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e-ci": {
+              "executor": "nx:noop",
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["@playwright/test"]
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/frontend/employer-portal-e2e/dist/.playwright/test-output",
+                "{workspaceRoot}/frontend/employer-portal-e2e/dist/.playwright/playwright-report"
+              ],
+              "dependsOn": [
+                {
+                  "target": "e2e-ci--src/example.spec.ts",
+                  "projects": "self",
+                  "params": "forward"
+                }
+              ],
+              "metadata": {
+                "technologies": ["playwright"],
+                "description": "Runs Playwright Tests in CI",
+                "nonAtomizedTarget": "e2e",
+                "help": {
+                  "command": "yarn playwright test --help",
+                  "example": {
+                    "options": {
+                      "workers": 1
+                    }
+                  }
+                }
+              },
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            }
+          },
+          "metadata": {
+            "targetGroups": {
+              "E2E (CI)": ["e2e-ci--src/example.spec.ts", "e2e-ci"]
+            }
+          },
+          "name": "employer-portal-e2e",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "frontend/employer-portal-e2e/src",
+          "tags": [],
+          "implicitDependencies": ["employer-portal"]
+        }
+      },
+      "admin-dashboard": {
+        "name": "admin-dashboard",
+        "type": "app",
+        "data": {
+          "root": "frontend/admin-dashboard",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/frontend/admin-dashboard/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "vitest"
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["vitest"]
+                },
+                {
+                  "env": "CI"
+                }
+              ],
+              "outputs": ["{workspaceRoot}/coverage/frontend/admin-dashboard"],
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Run Vite tests",
+                "help": {
+                  "command": "yarn vitest --help",
+                  "example": {
+                    "options": {
+                      "bail": 1,
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "vite build"
+              },
+              "cache": true,
+              "dependsOn": ["^build"],
+              "inputs": [
+                "production",
+                "^production",
+                {
+                  "externalDependencies": ["vite"]
+                }
+              ],
+              "outputs": ["{workspaceRoot}/frontend/admin-dashboard/dist"],
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Run Vite build",
+                "help": {
+                  "command": "yarn vite build --help",
+                  "example": {
+                    "options": {
+                      "sourcemap": true,
+                      "manifest": "manifest.json"
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "continuous": true,
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "vite"
+              },
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "yarn vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                },
+                "deprecated": "Use devTargetName instead. This option will be removed in Nx 22."
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "continuous": true,
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "vite"
+              },
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "yarn vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "dependsOn": ["build"],
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "vite preview"
+              },
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Locally preview Vite production build",
+                "help": {
+                  "command": "yarn vite preview --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "typecheck": {
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production",
+                {
+                  "externalDependencies": ["typescript"]
+                }
+              ],
+              "options": {
+                "cwd": "frontend/admin-dashboard",
+                "command": "tsc --noEmit -p tsconfig.app.json"
+              },
+              "metadata": {
+                "description": "Runs type-checking for the project.",
+                "technologies": ["typescript"],
+                "help": {
+                  "command": "yarn tsc -p tsconfig.app.json --help",
+                  "example": {
+                    "options": {
+                      "noEmit": true
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": ["^build"],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": ["build-deps"],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn nx watch --projects admin-dashboard --includeDependentProjects -- yarn nx build-deps admin-dashboard"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "projectType": "application",
+          "metadata": {},
+          "name": "admin-dashboard",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "frontend/admin-dashboard/src",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "employer-portal": {
+        "name": "employer-portal",
+        "type": "app",
+        "data": {
+          "root": "frontend/employer-portal",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/frontend/employer-portal/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "vitest"
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                {
+                  "externalDependencies": ["vitest"]
+                },
+                {
+                  "env": "CI"
+                }
+              ],
+              "outputs": ["{workspaceRoot}/coverage/frontend/employer-portal"],
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Run Vite tests",
+                "help": {
+                  "command": "yarn vitest --help",
+                  "example": {
+                    "options": {
+                      "bail": 1,
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "vite build"
+              },
+              "cache": true,
+              "dependsOn": ["^build"],
+              "inputs": [
+                "production",
+                "^production",
+                {
+                  "externalDependencies": ["vite"]
+                }
+              ],
+              "outputs": ["{workspaceRoot}/frontend/employer-portal/dist"],
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Run Vite build",
+                "help": {
+                  "command": "yarn vite build --help",
+                  "example": {
+                    "options": {
+                      "sourcemap": true,
+                      "manifest": "manifest.json"
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "continuous": true,
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "vite"
+              },
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "yarn vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                },
+                "deprecated": "Use devTargetName instead. This option will be removed in Nx 22."
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "continuous": true,
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "vite"
+              },
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "yarn vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "dependsOn": ["build"],
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "vite preview"
+              },
+              "metadata": {
+                "technologies": ["vite"],
+                "description": "Locally preview Vite production build",
+                "help": {
+                  "command": "yarn vite preview --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "typecheck": {
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production",
+                {
+                  "externalDependencies": ["typescript"]
+                }
+              ],
+              "options": {
+                "cwd": "frontend/employer-portal",
+                "command": "tsc --noEmit -p tsconfig.app.json"
+              },
+              "metadata": {
+                "description": "Runs type-checking for the project.",
+                "technologies": ["typescript"],
+                "help": {
+                  "command": "yarn tsc -p tsconfig.app.json --help",
+                  "example": {
+                    "options": {
+                      "noEmit": true
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": ["^build"],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": ["build-deps"],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn nx watch --projects employer-portal --includeDependentProjects -- yarn nx build-deps employer-portal"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "projectType": "application",
+          "metadata": {},
+          "name": "employer-portal",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "frontend/employer-portal/src",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "infrastructure": {
+        "name": "infrastructure",
+        "type": "app",
+        "data": {
+          "root": "infrastructure",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "infrastructure",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "technologies": ["jest"],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "yarn jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                },
+                "scriptContent": "npx jest",
+                "runCommand": "yarn test"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "watch"
+              },
+              "metadata": {
+                "scriptContent": "tsc -w",
+                "runCommand": "yarn watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "cdk": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "cdk"
+              },
+              "metadata": {
+                "scriptContent": "cdk",
+                "runCommand": "yarn cdk"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": ["^nx-release-publish"],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn build",
+                "cwd": "infrastructure"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "infrastructure",
+          "tags": ["npm:public"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": ["watch", "test", "cdk"]
+            },
+            "js": {
+              "packageName": "infrastructure",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "infrastructure",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "backend-e2e": {
+        "name": "backend-e2e",
+        "type": "e2e",
+        "data": {
+          "root": "backend-e2e",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "backend-e2e",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/backend-e2e/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "nx e2e backend-e2e"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e": {
+              "executor": "@nx/jest:jest",
+              "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
+              "options": {
+                "jestConfig": "backend-e2e/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "dependsOn": ["backend:build", "backend:serve"],
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "backend-e2e",
+          "$schema": "../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "implicitDependencies": ["backend"],
+          "tags": []
+        }
+      },
+      "protobuff": {
+        "name": "protobuff",
+        "type": "lib",
+        "data": {
+          "root": "protobuff",
+          "targets": {
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "options": {
+                "cwd": "protobuff",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest"
+              },
+              "metadata": {
+                "technologies": ["jest"],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "yarn jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js",
+                {
+                  "externalDependencies": ["jest"]
+                }
+              ],
+              "outputs": ["{workspaceRoot}/coverage/protobuff"],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": ["{options.outputPath}"],
+              "options": {
+                "outputPath": "dist/protobuff",
+                "main": "protobuff/src/index.ts",
+                "tsConfig": "protobuff/tsconfig.lib.json",
+                "assets": ["protobuff/src/verification.proto"]
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn generate",
+                "cwd": "protobuff"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "protobuff",
+          "tags": ["npm:private"],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@licensing-verification-platform/protobuff",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "protobuff/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "circuits": {
+        "name": "circuits",
+        "type": "lib",
+        "data": {
+          "root": "circuits",
+          "targets": {
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": ["{options.outputFile}"],
+              "options": {
+                "lintFilePatterns": ["circuits/**/*.ts"]
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+              "options": {
+                "jestConfig": "circuits/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "coverageReporters": ["text"]
+                }
+              },
+              "parallelism": true
+            },
+            "test:watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:watch"
+              },
+              "metadata": {
+                "scriptContent": "nx test circuits --watch",
+                "runCommand": "yarn test:watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:coverage": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:coverage"
+              },
+              "metadata": {
+                "scriptContent": "nx test circuits --coverage",
+                "runCommand": "yarn test:coverage"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": ["^nx-release-publish"],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": ["{options.outputPath}"],
+              "options": {
+                "outputPath": "dist/circuits",
+                "main": "circuits/src/index.ts",
+                "tsConfig": "circuits/tsconfig.lib.json",
+                "assets": ["circuits/*.md", "circuits/src/**/*.circom"]
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "compile": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "circom circuits/src/ExamProof.circom --r1cs --wasm --sym --c -o circuits/build/",
+                "cwd": "."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "setup": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn ts-node scripts/setup.ts",
+                "cwd": "circuits"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-proof": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn ts-node scripts/generate-proof.ts",
+                "cwd": "circuits"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "verify-proof": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn ts-node scripts/verify-proof.ts",
+                "cwd": "circuits"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-verifier": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn ts-node scripts/generate-verifier.ts",
+                "cwd": "circuits"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "circuits",
+          "tags": ["npm:public", "scope:circuits", "type:library"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": ["test:watch", "test:coverage"]
+            },
+            "description": "ZK-SNARK circuits for credential verification",
+            "js": {
+              "packageName": "@licensing-verification-platform/circuits",
+              "packageMain": "dist/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "circuits/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "backend": {
+        "name": "backend",
+        "type": "app",
+        "data": {
+          "root": "backend",
+          "projectType": "application",
+          "metadata": {},
+          "targets": {
+            "build": {
+              "options": {
+                "cwd": "backend",
+                "args": ["--node-env=production"],
+                "command": "webpack-cli build"
+              },
+              "cache": true,
+              "dependsOn": ["^build"],
+              "inputs": [
+                "production",
+                "^production",
+                {
+                  "externalDependencies": ["webpack-cli"]
+                }
+              ],
+              "outputs": ["{workspaceRoot}/backend/dist"],
+              "metadata": {
+                "technologies": ["webpack"],
+                "description": "Runs Webpack build",
+                "help": {
+                  "command": "yarn webpack-cli build --help",
+                  "example": {
+                    "options": {
+                      "json": "stats.json"
+                    },
+                    "args": ["--profile"]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "continuous": true,
+              "executor": "@nx/js:node",
+              "defaultConfiguration": "development",
+              "dependsOn": ["build"],
+              "options": {
+                "buildTarget": "backend:build",
+                "runBuildTargetDependencies": false
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "backend:build:development"
+                },
+                "production": {
+                  "buildTarget": "backend:build:production"
+                }
+              },
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "options": {
+                "cwd": "backend",
+                "args": ["--node-env=production"],
+                "command": "webpack-cli serve"
+              },
+              "metadata": {
+                "technologies": ["webpack"],
+                "description": "Starts Webpack dev server in production mode",
+                "help": {
+                  "command": "yarn webpack-cli serve --help",
+                  "example": {
+                    "options": {
+                      "args": ["--client-progress", "--history-api-fallback "]
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "dependsOn": ["build"],
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": ["^build"],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": ["build-deps"],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn nx watch --projects backend --includeDependentProjects -- yarn nx build-deps backend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "backend",
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/backend/eslint.config.mjs",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": ["eslint"]
+                }
+              ],
+              "outputs": ["{options.outputFile}"],
+              "metadata": {
+                "technologies": ["eslint"],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "yarn eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "metadata": {
+                "technologies": ["jest"],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "yarn jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js",
+                {
+                  "externalDependencies": ["jest"]
+                }
+              ],
+              "outputs": ["{workspaceRoot}/coverage/backend"],
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "backend",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prune-lockfile": {
+              "dependsOn": ["build"],
+              "cache": true,
+              "executor": "@nx/js:prune-lockfile",
+              "outputs": [
+                "{workspaceRoot}/backend/dist/package.json",
+                "{workspaceRoot}/backend/dist/yarn.lock"
+              ],
+              "options": {
+                "buildTarget": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "copy-workspace-modules": {
+              "dependsOn": ["build"],
+              "cache": true,
+              "outputs": ["{workspaceRoot}/backend/dist/workspace_modules"],
+              "executor": "@nx/js:copy-workspace-modules",
+              "options": {
+                "buildTarget": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prune": {
+              "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            }
+          },
+          "name": "backend",
+          "$schema": "../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "backend/src",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "shared": {
+        "name": "shared",
+        "type": "lib",
+        "data": {
+          "root": "shared",
+          "targets": {
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "options": {
+                "cwd": "shared",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest"
+              },
+              "metadata": {
+                "technologies": ["jest"],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "yarn jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js",
+                {
+                  "externalDependencies": ["jest"]
+                }
+              ],
+              "outputs": ["{workspaceRoot}/coverage/shared"],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": ["{options.outputPath}"],
+              "options": {
+                "outputPath": "dist/shared",
+                "main": "shared/src/index.ts",
+                "tsConfig": "shared/tsconfig.lib.json",
+                "assets": ["shared/*.md"]
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "shared",
+          "tags": ["npm:private"],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@licensing-verification-platform/shared",
+              "packageExports": {
+                ".": {
+                  "import": "./dist/src/index.js",
+                  "require": "./dist/src/index.js",
+                  "types": "./dist/src/index.d.ts"
+                }
+              },
+              "packageMain": "./dist/src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "shared/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "admin-dashboard-e2e": [
+        {
+          "source": "admin-dashboard-e2e",
+          "target": "admin-dashboard",
+          "type": "implicit"
+        }
+      ],
+      "employer-portal-e2e": [
+        {
+          "source": "employer-portal-e2e",
+          "target": "employer-portal",
+          "type": "implicit"
+        }
+      ],
+      "admin-dashboard": [],
+      "employer-portal": [],
+      "infrastructure": [],
+      "backend-e2e": [
+        {
+          "source": "backend-e2e",
+          "target": "backend",
+          "type": "implicit"
+        }
+      ],
+      "protobuff": [],
+      "circuits": [
+        {
+          "source": "circuits",
+          "target": "shared",
+          "type": "static"
+        }
+      ],
+      "backend": [],
+      "shared": []
+    }
+  }
+}

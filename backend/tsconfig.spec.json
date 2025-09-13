@@ -1,9 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../dist/out-tsc",
+    "outDir": "backend/dist/out-tsc",
     "module": "commonjs",
-    "moduleResolution": "node10","types": ["jest", "node"]
+    "moduleResolution": "node10",
+    "types": ["jest", "node"]
   },
   "include": [
     "jest.config.ts",

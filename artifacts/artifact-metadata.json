@@ -1,0 +1,16 @@
+{
+  "artifact_version": "1",
+  "name": "ExamProof",
+  "commit": "local",
+  "build_time": "2025-09-11T13:18:45.987Z",
+  "files": {
+    "build/ExamProof_js/ExamProof.wasm": {
+      "sha256": "9f3c638829759fc4bd7b6947a3e8b697f05391920f65121fb6f24066d618e3bc",
+      "size": 3311686
+    },
+    "build/ExamProof.r1cs": {
+      "sha256": "51f6dfbd5cbf58a59365cfacae443f98a8f0d5977893fcd1edb0d9530e232c9c",
+      "size": 4563696
+    }
+  }
+}

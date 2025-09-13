@@ -1,0 +1,199 @@
+name: Verify Binary Checksums
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'circuits/Dockerfile'
+      - 'circuits/scripts/expected-checksums/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'circuits/Dockerfile'
+      - 'circuits/scripts/expected-checksums/**'
+  workflow_dispatch:
+
+jobs:
+  verify-checksums:
+    runs-on: ubuntu-latest
+    name: Verify Binary Checksums
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify circom binary checksum
+        id: circom_verify
+        run: |
+          set -euo pipefail
+          echo "Verifying circom binary checksum..."
+
+          # Download circom binary
+          CIRCOM_VERSION="2.2.2"
+          CIRCOM_URL="https://github.com/iden3/circom/releases/download/v${CIRCOM_VERSION}/circom-linux-amd64"
+          curl -fsSL -o /tmp/circom "$CIRCOM_URL"
+
+          # Basic validation
+          if [ ! -s /tmp/circom ]; then
+            echo "ERROR: downloaded circom is empty or missing"
+            exit 1
+          fi
+
+          # Compute actual checksum
+          ACTUAL_CHECKSUM=$(sha256sum /tmp/circom | cut -d' ' -f1)
+          echo "Actual circom checksum: $ACTUAL_CHECKSUM"
+
+          # Read expected checksum (strip newline)
+          EXPECTED_CHECKSUM=$(tr -d '\n' < circuits/scripts/expected-checksums/circom_v2.2.2.sha256)
+          echo "Expected circom checksum: $EXPECTED_CHECKSUM"
+
+          # Verify checksums match
+          if [ "$ACTUAL_CHECKSUM" = "$EXPECTED_CHECKSUM" ]; then
+            echo "✅ circom checksum verification passed"
+            echo "circom_status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ circom checksum verification failed"
+            echo "Expected: $EXPECTED_CHECKSUM"
+            echo "Actual: $ACTUAL_CHECKSUM"
+            echo "circom_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Verify cosign binary checksum
+        id: cosign_verify
+        run: |
+          set -euo pipefail
+          echo "Verifying cosign binary checksum..."
+
+          # Download cosign binary
+          COSIGN_VERSION="2.5.3"
+          COSIGN_URL="https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64"
+          curl -fsSL -o /tmp/cosign "$COSIGN_URL"
+
+          # Basic validation
+          if [ ! -s /tmp/cosign ]; then
+            echo "ERROR: downloaded cosign is empty or missing"
+            exit 1
+          fi
+
+          # Compute actual checksum
+          ACTUAL_CHECKSUM=$(sha256sum /tmp/cosign | cut -d' ' -f1)
+          echo "Actual cosign checksum: $ACTUAL_CHECKSUM"
+
+          # Read expected checksum (strip newline)
+          EXPECTED_CHECKSUM=$(tr -d '\n' < circuits/scripts/expected-checksums/cosign_v2.5.3.sha256)
+          echo "Expected cosign checksum: $EXPECTED_CHECKSUM"
+
+          # Verify checksums match
+          if [ "$ACTUAL_CHECKSUM" = "$EXPECTED_CHECKSUM" ]; then
+            echo "✅ cosign checksum verification passed"
+            echo "cosign_status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ cosign checksum verification failed"
+            echo "Expected: $EXPECTED_CHECKSUM"
+            echo "Actual: $ACTUAL_CHECKSUM"
+            echo "cosign_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Test Docker build with checksum verification
+        run: |
+          echo "Testing Docker build with checksum verification..."
+
+          # Build the Docker image explicitly using the `circuits` directory as build context
+          docker build -t circuits-test -f circuits/Dockerfile circuits
+
+          # Verify binaries are installed and working
+          docker run --rm circuits-test circom --version
+          docker run --rm circuits-test cosign version
+
+          echo "✅ Docker build with checksum verification passed"
+
+      - name: Create issue for checksum mismatch
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔒 Binary Checksum Verification Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Checksum Verification Failed
+
+            The binary checksum verification has failed, indicating that the expected checksums may be outdated.
+
+            ### Details
+            - **Workflow**: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - **Commit**: [${context.sha.substring(0, 7)}](${context.payload.repository.html_url}/commit/${context.sha})
+            - **Branch**: \`${context.ref.replace('refs/heads/', '')}\`
+            - **Triggered by**: ${context.actor}
+
+            ### Action Required
+            Please update the expected checksums in the following files:
+            - \`circuits/scripts/expected-checksums/circom_v2.2.2.sha256\`
+            - \`circuits/scripts/expected-checksums/cosign_v2.5.3.sha256\`
+
+            ### How to Update
+            1. Run the workflow manually with \`workflow_dispatch\` to auto-update checksums
+            2. Or manually download binaries and compute new checksums
+            3. Update the checksum files and commit the changes
+
+            ### Labels
+            - \`security\`
+            - \`checksum-verification\`
+            - \`needs-attention\`
+
+            ---
+            *This issue was automatically created by the checksum verification workflow.*`;
+
+            // Check if an issue with similar title already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'checksum-verification'
+            });
+
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Binary Checksum Verification Failed')
+            );
+
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'checksum-verification', 'needs-attention']
+              });
+              console.log('Created new checksum verification issue');
+            } else {
+              console.log('Issue already exists, not creating duplicate');
+            }
+
+      - name: Update checksums if needed
+        if: failure() && github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Updating checksums..."
+
+          # Update circom checksum
+          CIRCOM_VERSION="2.2.2"
+          CIRCOM_URL="https://github.com/iden3/circom/releases/download/v${CIRCOM_VERSION}/circom-linux-amd64"
+          wget -O /tmp/circom "$CIRCOM_URL"
+          NEW_CIRCOM_CHECKSUM=$(sha256sum /tmp/circom | cut -d' ' -f1)
+          echo "$NEW_CIRCOM_CHECKSUM" > circuits/scripts/expected-checksums/circom_v2.2.2.sha256
+
+          # Update cosign checksum
+          COSIGN_VERSION="2.5.3"
+          COSIGN_URL="https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64"
+          wget -O /tmp/cosign "$COSIGN_URL"
+          NEW_COSIGN_CHECKSUM=$(sha256sum /tmp/cosign | cut -d' ' -f1)
+          echo "$NEW_COSIGN_CHECKSUM" > circuits/scripts/expected-checksums/cosign_v2.5.3.sha256
+
+          echo "Updated checksums:"
+          echo "circom: $NEW_CIRCOM_CHECKSUM"
+          echo "cosign: $NEW_COSIGN_CHECKSUM"
