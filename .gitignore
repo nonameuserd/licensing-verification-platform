@@ -56,3 +56,5 @@ circuits/*.sym
 circuits/circomlibjs.d.ts
 circuits/dist/
 circuits/trees/
+# Marker file written by circuits generator indicating the path to last canonical input
+circuits/.last-canonical

@@ -77,7 +77,7 @@ import path from 'path';
       // try signing the credential hash as BigInt/field
       try {
         sig = eddsa.sign(skBuf, credentialHash);
-      } catch (e) {
+      } catch {
         // fallback: sign buffer
         const msgHex = credentialHash.toString(16);
         const msgBuf = Buffer.from(msgHex.padStart(64, '0'), 'hex');

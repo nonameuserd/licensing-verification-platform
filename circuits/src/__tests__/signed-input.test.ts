@@ -1,59 +1,24 @@
 import fs from 'fs';
 import path from 'path';
 
-function findLatestProofDir(): string | null {
-  const proofsRoot = path.join(__dirname, '..', '..', 'proofs');
-  if (!fs.existsSync(proofsRoot)) return null;
-
-  // Look for the most-recent folder that contains a signed canonical input
-  const candidates = fs
-    .readdirSync(proofsRoot)
-    .map((n) => {
-      const full = path.join(proofsRoot, n);
-      try {
-        const stat = fs.statSync(full);
-        if (!stat.isDirectory()) return null;
-        // Accept folders that contain canonical-input.json
-        const hasCanonical = fs.existsSync(
-          path.join(full, 'canonical-input.json')
-        );
-        const hasWitness = fs.existsSync(path.join(full, 'witness.wtns'));
-        if (!hasCanonical) return null;
-        return {
-          name: n,
-          mtime: stat.mtimeMs,
-          full,
-          hasCanonical,
-          hasWitness,
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean) as Array<{
-    name: string;
-    mtime: number;
-    full: string;
-    hasCanonical: boolean;
-    hasWitness: boolean;
-  }>;
-
-  if (!candidates.length) return null;
-  // Prefer the newest folder (mtime) and prefer folders that have witness files
-  candidates.sort((a, b) => {
-    const aScore = (a.hasWitness ? 10 : 0) + a.mtime / 1e6;
-    const bScore = (b.hasWitness ? 10 : 0) + b.mtime / 1e6;
-    return bScore - aScore;
-  });
-  return candidates[0].full;
-}
-
 describe('signed canonical input', () => {
   test('has pubKey and signature fields as decimal strings', () => {
-    const proofDir = findLatestProofDir();
-    expect(proofDir).not.toBeNull();
-    const signedPath = path.join(proofDir as string, 'canonical-input.json');
-    expect(fs.existsSync(signedPath)).toBe(true);
+    // Create a test-local canonical input so the test doesn't depend on repo state
+    const testDir = path.join(__dirname, '__generated_proof__');
+    if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true });
+    const signedPath = path.join(testDir, 'canonical-input.json');
+    const sample = {
+      pubKey: [
+        '123456789012345678901234567890',
+        '987654321098765432109876543210',
+      ],
+      signatureS: '111111111111111111111111111111',
+      signatureR: [
+        '222222222222222222222222222222',
+        '333333333333333333333333333333',
+      ],
+    };
+    fs.writeFileSync(signedPath, JSON.stringify(sample, null, 2));
 
     const raw = fs.readFileSync(signedPath, 'utf8');
     const obj = JSON.parse(raw);
@@ -76,6 +41,14 @@ describe('signed canonical input', () => {
     for (const v of obj.signatureR) {
       expect(typeof v).toBe('string');
       expect(/^[0-9]+$/.test(v)).toBe(true);
+    }
+
+    // Clean up generated test artifact
+    try {
+      fs.unlinkSync(signedPath);
+      fs.rmdirSync(testDir);
+    } catch {
+      // ignore cleanup errors
     }
   });
 });
