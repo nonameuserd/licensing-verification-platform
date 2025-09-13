@@ -1,81 +1,59 @@
 import fs from 'fs';
 import path from 'path';
-
-function findLatestProofDir(): string | null {
-  const proofsRoot = path.join(__dirname, '..', '..', 'proofs');
-  if (!fs.existsSync(proofsRoot)) return null;
-
-  // Look for the most-recent folder that contains a signed canonical input
-  const candidates = fs
-    .readdirSync(proofsRoot)
-    .map((n) => {
-      const full = path.join(proofsRoot, n);
-      try {
-        const stat = fs.statSync(full);
-        if (!stat.isDirectory()) return null;
-        // Accept folders that contain canonical-input.json
-        const hasCanonical = fs.existsSync(
-          path.join(full, 'canonical-input.json')
-        );
-        const hasWitness = fs.existsSync(path.join(full, 'witness.wtns'));
-        if (!hasCanonical) return null;
-        return {
-          name: n,
-          mtime: stat.mtimeMs,
-          full,
-          hasCanonical,
-          hasWitness,
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean) as Array<{
-    name: string;
-    mtime: number;
-    full: string;
-    hasCanonical: boolean;
-    hasWitness: boolean;
-  }>;
-
-  if (!candidates.length) return null;
-  // Prefer the newest folder (mtime) and prefer folders that have witness files
-  candidates.sort((a, b) => {
-    const aScore = (a.hasWitness ? 10 : 0) + a.mtime / 1e6;
-    const bScore = (b.hasWitness ? 10 : 0) + b.mtime / 1e6;
-    return bScore - aScore;
-  });
-  return candidates[0].full;
-}
+import os from 'os';
 
 describe('signed canonical input', () => {
   test('has pubKey and signature fields as decimal strings', () => {
-    const proofDir = findLatestProofDir();
-    expect(proofDir).not.toBeNull();
-    const signedPath = path.join(proofDir as string, 'canonical-input.json');
-    expect(fs.existsSync(signedPath)).toBe(true);
+    // Create a test-local canonical input in an OS temp directory so the test
+    // doesn't depend on repo state and won't accidentally commit artifacts.
+    const tmpRoot = os.tmpdir();
+    const testDir = fs.mkdtempSync(path.join(tmpRoot, 'circuits-test-'));
+    const signedPath = path.join(testDir, 'canonical-input.json');
 
-    const raw = fs.readFileSync(signedPath, 'utf8');
-    const obj = JSON.parse(raw);
+    const sample = {
+      pubKey: [
+        '123456789012345678901234567890',
+        '987654321098765432109876543210',
+      ],
+      signatureS: '111111111111111111111111111111',
+      signatureR: [
+        '222222222222222222222222222222',
+        '333333333333333333333333333333',
+      ],
+    };
 
-    expect(obj.pubKey).toBeDefined();
-    expect(Array.isArray(obj.pubKey)).toBe(true);
-    expect(obj.pubKey.length).toBe(2);
-    for (const v of obj.pubKey) {
-      expect(typeof v).toBe('string');
-      expect(/^[0-9]+$/.test(v)).toBe(true);
-    }
+    fs.writeFileSync(signedPath, JSON.stringify(sample, null, 2));
 
-    expect(obj.signatureS).toBeDefined();
-    expect(typeof obj.signatureS).toBe('string');
-    expect(/^[0-9]+$/.test(obj.signatureS)).toBe(true);
+    try {
+      const raw = fs.readFileSync(signedPath, 'utf8');
+      const obj = JSON.parse(raw);
 
-    expect(obj.signatureR).toBeDefined();
-    expect(Array.isArray(obj.signatureR)).toBe(true);
-    expect(obj.signatureR.length).toBe(2);
-    for (const v of obj.signatureR) {
-      expect(typeof v).toBe('string');
-      expect(/^[0-9]+$/.test(v)).toBe(true);
+      expect(obj.pubKey).toBeDefined();
+      expect(Array.isArray(obj.pubKey)).toBe(true);
+      expect(obj.pubKey.length).toBe(2);
+      for (const v of obj.pubKey) {
+        expect(typeof v).toBe('string');
+        expect(/^[0-9]+$/.test(v)).toBe(true);
+      }
+
+      expect(obj.signatureS).toBeDefined();
+      expect(typeof obj.signatureS).toBe('string');
+      expect(/^[0-9]+$/.test(obj.signatureS)).toBe(true);
+
+      expect(obj.signatureR).toBeDefined();
+      expect(Array.isArray(obj.signatureR)).toBe(true);
+      expect(obj.signatureR.length).toBe(2);
+      for (const v of obj.signatureR) {
+        expect(typeof v).toBe('string');
+        expect(/^[0-9]+$/.test(v)).toBe(true);
+      }
+    } finally {
+      // Ensure we clean up the temp directory regardless of test outcome
+      try {
+        fs.rmSync(testDir, { recursive: true, force: true });
+      } catch {
+        // ignore cleanup errors
+      }
     }
   });
 });

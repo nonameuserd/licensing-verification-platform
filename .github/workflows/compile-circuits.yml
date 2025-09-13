@@ -1,15 +1,10 @@
 name: Compile Circuits
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - develop
   pull_request:
-    types: [closed]
-    branches:
-      - main
+    paths:
+      - 'circuits/**'
+  workflow_dispatch: {}
 
 jobs:
   compile:
