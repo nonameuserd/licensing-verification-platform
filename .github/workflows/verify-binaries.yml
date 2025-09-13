@@ -17,6 +17,10 @@ jobs:
   verify-checksums:
     runs-on: ubuntu-latest
     name: Verify Binary Checksums
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout code

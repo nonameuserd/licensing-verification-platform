@@ -14,6 +14,10 @@ on:
 jobs:
   compile:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     env:
       # Allow overriding perf threshold via repository env or workflow dispatch
       # Use an explicit empty default to avoid invalid expression references in the workflow linter
