@@ -1,0 +1,48 @@
+name: Circuits - generate-proof (integration)
+
+on:
+  pull_request:
+    paths:
+      - 'circuits/**'
+  workflow_dispatch: {}
+
+jobs:
+  generate-proof:
+    name: Generate canonical input and validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install circuits dependencies
+        run: yarn --cwd circuits install --frozen-lockfile
+
+      - name: Generate canonical input (INPUT_ONLY)
+        env:
+          INPUT_ONLY: '1'
+          HOLDER_NAME: 'Test User'
+          LICENSE_NUMBER: 'LIC12345'
+          EXAM_ID: 'EXAM-TEST-1'
+          ACHIEVEMENT_LEVEL: 'Passed'
+          ISSUED_DATE: '2024-01-01'
+          EXPIRY_DATE: '2026-01-01'
+          ISSUER: 'TEST-BOARD'
+          HOLDER_DOB: '1990-01-01'
+          NULLIFIER: '0x1234567890abcdef1234567890abcdef'
+          PRIVATE_KEY: '0xabcdefabcdefabcdefabcdefabcdefabcdef'
+        run: |
+          set -euo pipefail
+          yarn --cwd circuits generate-proof
+
+      - name: Validate canonical input was produced
+        run: |
+          set -euo pipefail
+          # .last-canonical contains the path to the canonical JSON written by the script
+          LAST=$(cat circuits/.last-canonical)
+          echo "Last canonical: $LAST"
+          node -e "const fs=require('fs'); const p=process.argv[1]; const s=fs.readFileSync(p,'utf8'); const o=JSON.parse(s); if(!o.pubKey||!o.signatureS||!o.signatureR){console.error('Missing required fields in canonical input'); process.exit(1);} console.log('Canonical input validated');" "$LAST"
