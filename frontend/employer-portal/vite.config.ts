@@ -7,11 +7,11 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/frontend/employer-portal',
-  server:{
+  server: {
     port: 4201,
     host: 'localhost',
   },
-  preview:{
+  preview: {
     port: 4201,
     host: 'localhost',
   },
@@ -34,10 +34,32 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'jsdom',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    reporters: ['default'],
+    reporters: ['default', 'html'],
     coverage: {
+      enabled: true,
       reportsDirectory: '../../coverage/frontend/employer-portal',
       provider: 'v8' as const,
-    }
+      reporter: ['text', 'text-summary', 'html', 'lcov', 'json'],
+      include: ['src/**/*.{ts,tsx,js,jsx}'],
+      exclude: [
+        'src/**/*.d.ts',
+        'src/**/*.test.{ts,tsx,js,jsx}',
+        'src/**/*.spec.{ts,tsx,js,jsx}',
+        'src/**/__tests__/**',
+        'src/**/test/**',
+        'src/**/tests/**',
+        'src/**/*.stories.{ts,tsx,js,jsx}',
+        'src/**/main.{ts,tsx,js,jsx}',
+        'src/**/index.{ts,tsx,js,jsx}',
+        'src/**/vite-env.d.ts',
+      ],
+      thresholds: {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
+    },
+    setupFiles: [],
   },
 }));

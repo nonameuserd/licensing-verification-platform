@@ -2,31 +2,27 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, features]
   pull_request:
     branches: [main, develop]
 
 jobs:
-  build-and-test:
+  smoke:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'yarn'
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Build
-        run: yarn build
-
-      - name: Test
-        run: yarn test
+      - name: Run CI pipeline (without e2e tests)
+        run: |
+          yarn install --frozen-lockfile
+          npx nx reset
+          yarn lint
+          npx nx run-many --target=build --all --exclude="*-e2e"

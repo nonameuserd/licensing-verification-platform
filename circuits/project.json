@@ -1,0 +1,75 @@
+{
+  "name": "circuits",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "circuits/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "circuits/dist",
+        "main": "circuits/src/index.ts",
+        "tsConfig": "circuits/tsconfig.lib.json",
+        "assets": ["circuits/*.md", "circuits/src/**/*.circom"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "circuits/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverageReporters": ["text"]
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["circuits/**/*.ts"]
+      }
+    },
+    "compile": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "if [ -x circuits/.bin/circom ]; then circuits/.bin/circom circuits/src/ExamProof.circom --r1cs --wasm --sym --c -o circuits/build/; else circom circuits/src/ExamProof.circom --r1cs --wasm --sym --c -o circuits/build/; fi",
+        "cwd": "."
+      }
+    },
+    "setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn ts-node scripts/setup.ts",
+        "cwd": "circuits"
+      }
+    },
+    "generate-proof": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn ts-node scripts/generate-proof.ts",
+        "cwd": "circuits"
+      }
+    },
+    "verify-proof": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn ts-node scripts/verify-proof.ts",
+        "cwd": "circuits"
+      }
+    },
+    "generate-verifier": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn ts-node scripts/generate-verifier.ts",
+        "cwd": "circuits"
+      }
+    }
+  },
+  "tags": ["scope:circuits", "type:library"]
+}
