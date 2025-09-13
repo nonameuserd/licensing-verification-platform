@@ -107,9 +107,8 @@ jobs:
         run: |
           echo "Testing Docker build with checksum verification..."
 
-          # Build the Docker image to ensure checksum verification works
-          cd circuits
-          docker build -t circuits-test .
+          # Build the Docker image explicitly using the `circuits` directory as build context
+          docker build -t circuits-test -f circuits/Dockerfile circuits
 
           # Verify binaries are installed and working
           docker run --rm circuits-test circom --version
