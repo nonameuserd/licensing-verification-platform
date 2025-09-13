@@ -22,7 +22,7 @@ ENV CIRCOM_VERSION=2.2.2
 ENV SNARKJS_VERSION=0.7.2
 
 # Copy expected checksums into the image so Docker build and CI use the same source-of-truth
-COPY scripts/expected-checksums/ /tmp/checksums/
+COPY circuits/scripts/expected-checksums/ /tmp/checksums/
 
 # Install circom by building from source (as recommended in official docs)
 RUN set -eux; \
