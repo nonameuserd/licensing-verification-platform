@@ -22,7 +22,10 @@ ENV CIRCOM_VERSION=2.2.2
 ENV SNARKJS_VERSION=0.7.2
 
 # Copy expected checksums into the image so Docker build and CI use the same source-of-truth
-COPY circuits/scripts/expected-checksums/ /tmp/checksums/
+# When building with `docker build` from the `circuits` folder, the build context is the `circuits` directory,
+# so copy paths must be relative to that context. CI previously attempted to copy `circuits/...` which
+# doesn't exist in the context and caused `not found` errors.
+COPY scripts/expected-checksums/ /tmp/checksums/
 
 # Install circom by building from source (as recommended in official docs)
 RUN set -eux; \
@@ -61,6 +64,7 @@ WORKDIR /work
 
 # Copy package.json for installing node deps only when they change
 # Use files from the build context (expected when building from the `circuits` folder)
+# Earlier the Dockerfile copied from `circuits/...` which fails when the build context is already `circuits`.
 COPY package.json /work/circuits/package.json
 COPY yarn.lock /work/circuits/yarn.lock
 

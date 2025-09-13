@@ -45,7 +45,9 @@ jobs:
 
       - name: Build circuits Docker image
         run: |
-          docker build -t lvp-circuits -f circuits/Dockerfile .
+          # Explicitly set the build context to the `circuits` directory so COPY paths
+          # inside the Dockerfile that are relative to `circuits` resolve correctly.
+          docker build -t lvp-circuits -f circuits/Dockerfile circuits
 
       - name: Run circuits compile inside container
         run: |
