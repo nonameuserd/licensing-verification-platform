@@ -1,17 +1,11 @@
 name: Verify Binary Checksums
 
 on:
-  push:
-    branches: [main, develop]
-    paths:
-      - 'circuits/Dockerfile'
-      - 'circuits/scripts/expected-checksums/**'
   pull_request:
-    branches: [main, develop]
     paths:
       - 'circuits/Dockerfile'
       - 'circuits/scripts/expected-checksums/**'
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   verify-checksums:
