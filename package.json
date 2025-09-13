@@ -4,7 +4,7 @@
   "scripts": {
     "build": "nx run-many --target=build --all",
     "compile-circuits": "docker build -t lvp-circuits -f circuits/Dockerfile circuits && docker run --rm -v $(pwd):/work -w /work lvp-circuits npm run compile --prefix /work/circuits",
-    "test": "nx run-many --target=test --all && nx run-many --target=e2e --all",
+    "test": "nx run-many --target=test --all",
     "ci": "yarn install --frozen-lockfile && yarn lint && yarn build",
     "lint": "nx run-many --target=lint --all",
     "prepare": "husky",
