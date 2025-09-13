@@ -25,6 +25,10 @@ jobs:
         run: |
           yarn install --frozen-lockfile
 
+      - name: Reset Nx daemon
+        run: |
+          npx nx reset
+
       - name: Build shared library
         run: |
           npx nx run shared:build
