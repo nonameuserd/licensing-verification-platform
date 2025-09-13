@@ -11,7 +11,6 @@
     "noFallthroughCasesInSwitch": true,
     "declaration": true,
     "outDir": "dist",
-    "rootDir": ".",
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "types": ["jest", "node"],
@@ -20,11 +19,7 @@
     "typeRoots": ["./types", "./node_modules/@types", "../node_modules/@types"]
   },
   "files": [],
-  "references": [
-    {
-      "path": "../shared/tsconfig.lib.json"
-    }
-  ],
+  "references": [],
   "include": ["src/**/*", "scripts/**/*", "*.d.ts"],
   "exclude": ["node_modules", "dist", "build"]
 }

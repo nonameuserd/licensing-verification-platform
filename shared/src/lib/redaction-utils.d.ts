@@ -14,30 +14,16 @@ export declare const DEFAULT_REDACTION_CONFIG: RedactionConfig;
 /**
  * Redacts PII from a string value
  */
-export declare function redactString(
-  value: string,
-  fieldName: string,
-  config: RedactionConfig
-): string;
+export declare function redactString(value: string, fieldName: string, config: RedactionConfig): string;
 /**
  * Recursively redacts PII from an object
  */
-export declare function redactObject(
-  obj: unknown,
-  config?: RedactionConfig,
-  visited?: WeakSet<object>
-): unknown;
+export declare function redactObject(obj: unknown, config?: RedactionConfig, visited?: WeakSet<object>): unknown;
 /**
  * Checks if a field name matches PII patterns
  */
-export declare function isPIIField(
-  fieldName: string,
-  patterns?: PIIField[]
-): boolean;
+export declare function isPIIField(fieldName: string, patterns?: PIIField[]): boolean;
 /**
  * Creates a safe version of an object for logging
  */
-export declare function createSafeLogObject(
-  obj: unknown,
-  config?: RedactionConfig
-): unknown;
+export declare function createSafeLogObject(obj: unknown, config?: RedactionConfig): unknown;
