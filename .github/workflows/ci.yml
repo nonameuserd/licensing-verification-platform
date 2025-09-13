@@ -21,4 +21,4 @@ jobs:
           cache: 'yarn'
 
       - name: Run CI pipeline (without e2e tests)
-        run: yarn install --frozen-lockfile && yarn lint && nx run-many --target=build --all
+        run: yarn install --frozen-lockfile && yarn lint && npx nx run-many --target=build --all
